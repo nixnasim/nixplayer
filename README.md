@@ -20,7 +20,19 @@ npm start
 npm run dist
 ```
 
-The installer appears in `dist/`. It registers the player for mp4, mkv, webm, mov, avi, mp3, flac and more, so "Open with" and double-click work.
+The installer appears in `dist/` (`NixPlayer-Setup-<version>.exe`). It installs in one click for the current user (no folder to choose, no admin rights) and registers the player for mp4, mkv, webm, mov, avi, mp3, flac and more, so "Open with" and double-click work.
+
+## Updates, versions and releases
+
+- **Users:** NixPlayer checks for updates at start and every 6 hours (also Settings → About → Check for updates). When a new version exists it asks **Update now / Later**. "Update now" downloads it, installs it in the same folder as the current install and opens NixPlayer again.
+- **You (developer):** the code is tracked with Git, so `git diff` / `git log` show exactly what changed. To publish a new version: `npm version patch`, then `git push --follow-tags`. GitHub Actions builds the installer and publishes it. Full steps and the one-time setup (private source repo + public releases repo + token) are in [RELEASING.md](RELEASING.md).
+- Version history: [CHANGELOG.md](CHANGELOG.md).
+
+## Support, license, credits
+
+- **Donate:** put your link in `package.json` → `nixplayer.donateUrl`; a "Donate" button then appears in Settings → About.
+- **License:** freeware, © Nasimul Islam Nasim, see [LICENSE](LICENSE).
+- **Third-party software** (Electron, ffmpeg, hls.js, Lucide icons ...): see [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
 
 ## Features
 
@@ -83,6 +95,7 @@ For full codec coverage later, the same UI can sit on top of libmpv.
 - `renderer/icons.js` – the SVG icon set (Lucide, ISC license)
 - `renderer/player.html` – the player UI
 - `renderer/desktop.js` – settings, playlist, shortcuts, resume, screenshots (only active inside the desktop app; `player.html` still works as a plain web page without it)
+- `updater.js` – auto-update from GitHub Releases, "About" helpers (version, license, links)
 
 
 ## Recent changes
@@ -148,3 +161,6 @@ The control bar sits below the picture and never covers it. Settings → General
 
 ## v1.5.5
 - Online files: the embedded subtitle is ON by default again (and can be switched off / on as usual).
+
+## v1.6.0
+- Release setup: one-click installer, auto-update ("Update now" installs in the same place), About page with version / license / donate, Git + GitHub Actions. Details in [CHANGELOG.md](CHANGELOG.md).

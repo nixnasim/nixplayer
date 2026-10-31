@@ -1,0 +1,22 @@
+# dependencies and build output
+node_modules/
+dist/
+out/
+
+# secrets and signing files: never commit these
+.env
+.env.*
+*.pfx
+*.p12
+*.pem
+*.key
+
+# tools downloaded at run time
+bin/
+yt-dlp*
+
+# logs and OS files
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db

@@ -1,0 +1,49 @@
+NixPlayer - Freeware License
+
+Copyright (c) 2026 Nasimul Islam Nasim. All rights reserved.
+
+"NixPlayer" (the "Software") is the original work of Nasimul Islam Nasim (the "Author").
+The Author owns all rights in the Software, including its source code, user interface,
+logo and name, except for the third-party components listed in THIRD-PARTY-NOTICES.md,
+which stay under their own licenses.
+
+1. Permission to use
+   You may install and use the Software, free of charge, on any number of your own
+   computers, for personal, educational or commercial use.
+
+2. Redistribution
+   You may share the unmodified official installer (the file published by the Author on
+   the official releases page) with other people, free of charge, as long as you keep
+   this license with it. You may not sell the Software or charge for access to it.
+
+3. Restrictions
+   Except where the law allows it despite this restriction, you may not: (a) modify,
+   translate or create derivative works of the Software; (b) reverse engineer, decompile
+   or disassemble the Software; (c) remove or change copyright notices, the name or the
+   logo; (d) publish the Software, or a modified version of it, under a different name.
+
+4. Third-party components
+   The Software includes open-source components (for example Electron, ffmpeg, hls.js).
+   They are covered by their own licenses, listed in THIRD-PARTY-NOTICES.md. Nothing in
+   this license limits the rights those licenses give you for those components.
+
+5. Content you play
+   The Software only plays files and links that you choose. You are responsible for
+   having the right to play, record or download that content and for following the
+   terms of the websites you use.
+
+6. Updates
+   The Software can check for updates and, with your permission, install them.
+   Updates are covered by this same license.
+
+7. No warranty
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+   INCLUDING BUT NOT LIMITED TO MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+   NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR
+   OTHER LIABILITY ARISING FROM THE USE OF THE SOFTWARE.
+
+8. Ending
+   This license ends automatically if you break its terms. Then you must stop using the
+   Software and delete your copies.
+
+This text is a plain freeware license, not legal advice.

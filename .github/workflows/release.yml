@@ -1,0 +1,27 @@
+# Push a tag like v1.6.1 and this builds the Windows installer and publishes it
+# (installer + latest.yml, which the in-app updater reads) to the PUBLIC releases repo.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build and publish
+        run: npx electron-builder --win --publish always
+        env:
+          # fine-grained token with "Contents: read and write" on the releases repo only
+          GH_TOKEN: ${{ secrets.RELEASES_TOKEN }}
