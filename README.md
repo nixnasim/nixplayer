@@ -20,7 +20,7 @@ npm start
 npm run dist
 ```
 
-The installer appears in `dist/` (`NixPlayer-Setup-<version>.exe`). It installs in one click for the current user (no folder to choose, no admin rights) and registers the player for mp4, mkv, webm, mov, avi, mp3, flac and more, so "Open with" and double-click work.
+The installer appears in `dist/` (`NixPlayer-Setup-<version>.exe`). The first install lets you choose the folder (default: your user folder, no admin rights needed) and registers the player for mp4, mkv, webm, mov, avi, mp3, flac and more, so "Open with" and double-click work.
 
 ## Updates, versions and releases
 
@@ -163,4 +163,4 @@ The control bar sits below the picture and never covers it. Settings → General
 - Online files: the embedded subtitle is ON by default again (and can be switched off / on as usual).
 
 ## v1.6.0
-- Release setup: one-click installer, auto-update ("Update now" installs in the same place), About page with version / license / donate, Git + GitHub Actions. Details in [CHANGELOG.md](CHANGELOG.md).
+- Release setup: per-user installer, auto-update ("Update now" installs in the same place), About page with version / license / donate, Git + GitHub Actions. Details in [CHANGELOG.md](CHANGELOG.md).

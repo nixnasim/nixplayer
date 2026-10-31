@@ -62,9 +62,9 @@
       "icon": "build/icon.ico"
     },
     "nsis": {
-      "oneClick": true,
+      "oneClick": false,
       "perMachine": false,
-      "allowToChangeInstallationDirectory": false,
+      "allowToChangeInstallationDirectory": true,
       "runAfterFinish": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
@@ -99,7 +99,8 @@
         "repo": "nixplayer-releases",
         "releaseType": "release"
       }
-    ]
+    ],
+    "copyright": "Copyright © 2026 Nasimul Islam Nasim"
   },
   "dependencies": {
     "electron-updater": "^6.8.11",
