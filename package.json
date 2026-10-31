@@ -1,0 +1,71 @@
+{
+  "name": "nixplayer",
+  "version": "1.5.5",
+  "description": "NixPlayer - a simple desktop video player with a clean custom top bar",
+  "main": "main.js",
+  "author": "Nasimul Islam Nasim",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win",
+    "pack": "electron-builder --dir"
+  },
+  "devDependencies": {
+    "electron": "^45.1.0",
+    "electron-builder": "^26.18.0"
+  },
+  "build": {
+    "appId": "com.nixplayer.app",
+    "productName": "NixPlayer",
+    "files": [
+      "main.js",
+      "preload.js",
+      "av.js",
+      "webproxy.js",
+      "renderer/**",
+      "build/icon.png"
+    ],
+    "fileAssociations": [
+      {
+        "ext": [
+          "mp4",
+          "m4v",
+          "mkv",
+          "webm",
+          "mov",
+          "avi",
+          "mp3",
+          "flac",
+          "wav",
+          "ogg",
+          "m4a"
+        ],
+        "name": "Media file",
+        "role": "Viewer"
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "protocols": [
+      {
+        "name": "NixPlayer link",
+        "schemes": [
+          "nixplayer"
+        ]
+      }
+    ],
+    "asarUnpack": [
+      "node_modules/ffmpeg-static/**"
+    ]
+  },
+  "dependencies": {
+    "ffmpeg-static": "^5.2.0",
+    "hls.js": "^1.5.17"
+  }
+}
