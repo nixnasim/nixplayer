@@ -964,6 +964,17 @@ const TABS={
     let c=sec(box,'NixPlayer','info');
     note(c,'A simple desktop video player. Drop files on the window, press Ctrl+O, or use “Open with”. Press Ctrl+, for these settings.');
     note(c,'Plays whatever Chromium can decode: MP4 / MKV / WebM with H.264, VP9, AV1 and AAC / MP3 / Opus / FLAC. AC3 / E-AC3 / DTS audio, files with several audio tracks and text subtitles inside MKV are handled with the bundled ffmpeg (audio is re-encoded live, nothing is written next to your file). Picture-based subtitles (PGS / VobSub) are not supported.');
+    const cv=sec(box,'Version and updates','reset'),cs=sec(box,'Support and legal','info');
+    fact(cv,'Installed version','…');
+    desk.appInfo().then(i=>{const x=cv.querySelector('.fx');if(x)x.textContent='NixPlayer '+i.version}).catch(()=>{});
+    ctl(cv,{t:'btn',l:'Check for updates',d:'NixPlayer also checks by itself. When an update is found, press “Update now”: it installs in the same place and opens again.',text:'Check now',ic:'reset',run:()=>desk.checkUpdate()});
+    const legal=i=>{ // donate / downloads rows show only when their link is set in package.json ("nixplayer" block)
+      if(i.donateUrl)ctl(cs,{t:'btn',l:'Support NixPlayer',d:'NixPlayer is free. A donation helps to keep it updated.',text:'Donate',ic:'link',run:()=>desk.openUrl(i.donateUrl)});
+      if(i.homepage)ctl(cs,{t:'btn',l:'Downloads and release notes',text:'Open page',ic:'url',run:()=>desk.openUrl(i.homepage)});
+      ctl(cs,{t:'btn',l:'License',d:'Copyright © Nasimul Islam Nasim. Free to use.',text:'Open',ic:'info',run:()=>desk.openDoc('license')});
+      ctl(cs,{t:'btn',l:'Third-party notices',d:'Electron, ffmpeg, hls.js, Lucide icons and others.',text:'Open',ic:'info',run:()=>desk.openDoc('notices')});
+    };
+    desk.appInfo().then(legal).catch(()=>legal({}));
     c=sec(box,'Maintenance','reset');
     ctl(c,{t:'btn',l:'Reset all settings',d:'Watch history, bookmarks and resume positions are kept.',text:'Reset',ic:'reset',danger:true,run:async()=>{if(confirm('Reset all NixPlayer settings to their defaults?')){try{localStorage.removeItem('np')}catch(e){}try{window.subClearAll&&await subClearAll()}catch(e){}location.reload()}}});
   }},

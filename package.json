@@ -1,14 +1,19 @@
 {
   "name": "nixplayer",
-  "version": "1.5.5",
+  "version": "1.6.0",
   "description": "NixPlayer - a simple desktop video player with a clean custom top bar",
   "main": "main.js",
   "author": "Nasimul Islam Nasim",
-  "license": "MIT",
+  "nixplayer": {
+    "donateUrl": "",
+    "homepage": "https://github.com/nixnasim/nixplayer-releases"
+  },
+  "license": "SEE LICENSE IN LICENSE",
   "scripts": {
     "start": "electron .",
     "dist": "electron-builder --win",
-    "pack": "electron-builder --dir"
+    "pack": "electron-builder --dir",
+    "release": "electron-builder --win --publish always"
   },
   "devDependencies": {
     "electron": "^45.1.0",
@@ -22,6 +27,7 @@
       "preload.js",
       "av.js",
       "webproxy.js",
+      "updater.js",
       "renderer/**",
       "build/icon.png"
     ],
@@ -45,12 +51,24 @@
       }
     ],
     "win": {
-      "target": "nsis",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
       "icon": "build/icon.ico"
     },
     "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false,
+      "runAfterFinish": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "deleteAppDataOnUninstall": false
     },
     "protocols": [
       {
@@ -62,10 +80,31 @@
     ],
     "asarUnpack": [
       "node_modules/ffmpeg-static/**"
+    ],
+    "artifactName": "${productName}-Setup-${version}.${ext}",
+    "extraResources": [
+      {
+        "from": "LICENSE",
+        "to": "LICENSE.txt"
+      },
+      {
+        "from": "THIRD-PARTY-NOTICES.md",
+        "to": "THIRD-PARTY-NOTICES.md"
+      }
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "nixnasim",
+        "repo": "nixplayer-releases",
+        "releaseType": "release"
+      }
     ]
   },
   "dependencies": {
+    "electron-updater": "^6.8.11",
     "ffmpeg-static": "^5.2.0",
     "hls.js": "^1.5.17"
-  }
+  },
+  "homepage": "https://github.com/nixnasim/nixplayer-releases"
 }

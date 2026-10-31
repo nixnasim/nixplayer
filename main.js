@@ -105,6 +105,7 @@ else{
       cb({requestHeaders:h});
     });
     createWindow();
+    require('./updater.js').init(()=>win); // auto-update (installed app only) + About-page helpers
     app.on('activate',()=>{if(!BrowserWindow.getAllWindows().length)createWindow()});
   });
 }

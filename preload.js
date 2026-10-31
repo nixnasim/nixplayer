@@ -37,6 +37,10 @@ contextBridge.exposeInMainWorld('desk',{
   audioUrl:(p,i,ss)=>call('av:audio',p,i,ss),
   thumbState:p=>call('thumb:state',p),
   onThumb:cb=>ipcRenderer.on('thumb:cmd',(_e,c)=>cb(c)),
+  appInfo:()=>call('app:info'),
+  checkUpdate:()=>call('upd:check'),
+  openDoc:n=>call('app:doc',n),
+  openUrl:u=>call('app:open',u),
   pathOf:f=>webUtils.getPathForFile(f),
   onOpen:cb=>ipcRenderer.on('open-files',(_e,files)=>cb(files))
 });
