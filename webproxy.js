@@ -1,6 +1,6 @@
 /* NixPlayer — streaming proxy for online videos (main process).
    The <video> element, and ffmpeg (audio tracks / embedded subtitles), read an online file through
-   http://127.0.0.1:<port>/s/<id>. The proxy talks to the real server the way PotPlayer / VLC do:
+   http://127.0.0.1:<port>/s/<id>. The proxy talks to the real server the way a desktop media player does:
      - every seek / resume is a fresh ranged request; the old upstream connection is closed AT ONCE
        (servers that allow only 1-2 connections per user otherwise leave the new request waiting forever)
      - if the server drops the connection (idle while paused, timeout, network blip) it reconnects by itself
