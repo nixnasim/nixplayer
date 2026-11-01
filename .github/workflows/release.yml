@@ -19,6 +19,16 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - name: Create the version tag if it does not exist yet
+        shell: bash
+        run: |
+          V=$(node -p "require('./package.json').version")
+          if git ls-remote --exit-code --tags origin "refs/tags/v$V" >/dev/null 2>&1; then
+            echo "Tag v$V already exists"
+          else
+            git tag "v$V"
+            git push origin "v$V"
+          fi
       - run: npm ci
       - name: Build and publish
         run: npx electron-builder --win --publish always
