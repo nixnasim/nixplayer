@@ -12,6 +12,11 @@ const EXT=MEDIA.source.match(/\((.*)\)/)[1].split('|');
 // multiple audio tracks (audio track selector) + autoplay without a click
 app.commandLine.appendSwitch('enable-blink-features','AudioVideoTracks');
 app.commandLine.appendSwitch('autoplay-policy','no-user-gesture-required');
+// keep playing when the window is minimized or covered by another window (Chromium otherwise treats it as "hidden" and may pause the video)
+app.commandLine.appendSwitch('disable-features','CalculateNativeWinOcclusion,BackgroundVideoPauseOptimization,BackgroundVideoTrackOptimization');
+app.commandLine.appendSwitch('disable-renderer-backgrounding');
+app.commandLine.appendSwitch('disable-background-timer-throttling');
+app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
 
 // media:// serves local files with Range support (seeking) and CORS headers (needed for screenshots + volume boost)
 const PRIV={standard:true,secure:true,supportFetchAPI:true,stream:true,corsEnabled:true,bypassCSP:true};
@@ -39,7 +44,7 @@ function sendFiles(files){if(win&&files.length)win.webContents.send('open-files'
 function createWindow(){
   const s=readState();
   const opts={width:s.width||1000,height:s.height||600,minWidth:420,minHeight:260,backgroundColor:'#000000',icon:path.join(__dirname,'renderer','logo.png'),autoHideMenuBar:true,frame:false,title:'NixPlayer',
-    webPreferences:{preload:path.join(__dirname,'preload.js'),contextIsolation:true,nodeIntegration:false}};
+    webPreferences:{preload:path.join(__dirname,'preload.js'),contextIsolation:true,nodeIntegration:false,backgroundThrottling:false}};
   if(Number.isFinite(s.x)&&Number.isFinite(s.y)){
     const ok=screen.getAllDisplays().some(d=>{const b=d.bounds;return s.x>=b.x-50&&s.x<b.x+b.width-100&&s.y>=b.y-10&&s.y<b.y+b.height-100});
     if(ok){opts.x=s.x;opts.y=s.y}

@@ -3,6 +3,14 @@
 All notable changes to NixPlayer. Format: [Keep a Changelog](https://keepachangelog.com), versions follow [SemVer](https://semver.org) (MAJOR.MINOR.PATCH).
 Older notes (1.0 to 1.5.5) are in the "Recent changes" part of `README.md`.
 
+## [Unreleased]
+
+### Added
+- Settings → Audio → **Loudness boost** (Off / Light / Medium / Strong, default Medium): lifts quiet sound and dialogue by about 3 / 6 / 9 dB while loud scenes stay about the same, and a peak limiter prevents distortion. Measured in Chromium with test signals.
+
+### Fixed
+- The video no longer pauses when the window is minimized or covered by another window. Chromium could pause a hidden video (mostly files whose own sound is replaced by the external audio stream, or muted video). Pauses by the user (keys, click, taskbar buttons, media keys) are never undone.
+
 ## [1.6.0] - 2026-10-31
 
 ### Added

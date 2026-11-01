@@ -14,7 +14,7 @@ window.hexA=hexA;
 /* ---------- settings defaults (merged into the S object of the main script) ---------- */
 const D={hideMs:2500,accent:'#2f7bff',theme:'system',history:true,onTop:false,awake:true,resume:true,autoNext:true,loop:'off',shuffle:false,
   autoFit:false,lockAspect:false,shotDir:'',recDir:'',shotFmt:'png',defSpeed:1,gest:true,autoHide:false,clickAct:'none',dblAct:'play',spdStep:.1,holdOn:true,wheel:true,
-  aspect:'fit',con:1,sat:1,flip:false,maxVol:1,vol:1,remVol:true,
+  aspect:'fit',con:1,sat:1,flip:false,maxVol:1,vol:1,remVol:true,loud:'medium',
   autoSub:true,sbo:0,sout:true,spos:5,sfont:'system-ui, sans-serif',sdelay:0,trOn:true,trLang:'bn',trHover:true,trSel:true,trPause:false,trDic:false,trLeft:'search',trRight:'pin',trEngine:'google',trUrl:'https://www.google.com/search?q={q}'};
 for(const k in D)if(S[k]===undefined)S[k]=D[k];
 /* m16: subtitle defaults (white text, black outline, no box, just above the bottom edge of the picture) */
@@ -22,7 +22,7 @@ if(!S.m16){S.sbo=0;S.sc='#ffffff';S.sb='#000000';S.sout=true;S.spos=5;S.m16=1;sa
 if(!S.m17){if((S.accent||'').toLowerCase()==='#ff8800')S.accent='#2f7bff';S.m17=1;save()} /* default accent now matches the logo theme */
 S.keys=S.keys||{};
 
-let PL=[],idx=-1,cur='',LV=1,actx=null,gain=null;
+let PL=[],idx=-1,cur='',LV=1,actx=null,loud=null;
 window.curId=()=>cur; /* the open video's path; player.html needs it to remember subtitles per video */
 
 /* ---------- styles for settings dialog + playlist ---------- */
@@ -172,7 +172,7 @@ function applyAll(){
   style();
   root.style.setProperty('--ac',S.accent);root.style.setProperty('--sf',S.sfont);
   applyTheme();applyFx();applyAspect();subTweak();window.subLayout&&subLayout();
-  v.loop=S.loop==='one';if(LV>S.maxVol)deskVol(S.maxVol,true);
+  v.loop=S.loop==='one';if(LV>S.maxVol)deskVol(S.maxVol,true);applyLoud();
   window.syncAH&&syncAH();
   desk.setAspect(S.lockAspect&&v.videoHeight?v.videoWidth/v.videoHeight:0,barH());
 }
@@ -187,12 +187,23 @@ const syncAud=()=>{aud.muted=v.muted;aud.volume=Math.min(1,LV)};
 /* ---------- volume (0–max, boost above 100% via Web Audio) ---------- */
 function deskVol(x,quiet){
   LV=Math.min(S.maxVol,Math.max(0,x));v.muted=false;v.volume=Math.min(1,LV);
-  if(LV>1){
-    if(!actx){actx=new AudioContext();gain=actx.createGain();actx.createMediaElementSource(v).connect(gain);actx.createMediaElementSource(aud).connect(gain);gain.connect(actx.destination)}
-    gain.gain.value=LV;if(actx.state==='suspended')actx.resume();
-  }else if(gain)gain.gain.value=1;
+  applyLoud();
   syncAud();S.vol=LV;save();
   if(!quiet)hud(Math.round(LV*100)+'%',volIc(LV),LV/S.maxVol*100);
+}
+/* Loudness boost (Settings → Audio) + volume above 100%: both go through one Web Audio chain (see loudness.js).
+   The chain is only created when it is needed, because a media element can be attached to Web Audio only once. */
+function applyLoud(){
+  const mode=S.loud||'off';
+  if(mode==='off'&&!(LV>1)&&!actx)return;
+  if(!actx){
+    actx=new AudioContext({latencyHint:'playback'});loud=NPLoud.build(actx);
+    actx.createMediaElementSource(v).connect(loud.input);actx.createMediaElementSource(aud).connect(loud.input);
+    loud.output.connect(actx.destination);
+    actx.onstatechange=()=>{if(actx.state==='suspended')actx.resume().catch(()=>{})};
+  }
+  loud.set(mode,LV);
+  if(actx.state==='suspended')actx.resume().catch(()=>{});
 }
 window.deskVol=deskVol;window.curVol=()=>LV;
 
@@ -288,6 +299,25 @@ v.addEventListener('playing',()=>{if(audOn()&&aud.getAttribute('src')&&aud.pause
 v.addEventListener('seeked',()=>{if(audOn())startAud(v.currentTime)});
 v.addEventListener('ratechange',()=>{if(audOn())aud.playbackRate=v.playbackRate});
 v.addEventListener('volumechange',syncAud);
+/* Keep playing when the window is minimized or covered: Chromium can pause a video it thinks nobody sees (mostly when the
+   file's own sound is switched off because an external audio stream plays). A pause that NixPlayer did not ask for, while the page
+   is hidden, is undone; a pause from the user (key, click, taskbar button, media key) is never undone. */
+{
+  let own=0,sys=false;
+  const rawPause=v.pause.bind(v);
+  v.pause=function(){own=Date.now();sys=false;return rawPause()};
+  const resume=()=>v.play().catch(()=>{});
+  v.addEventListener('pause',()=>{
+    if(Date.now()-own<800||v.ended||holdV||!v.currentSrc)return;
+    if(document.visibilityState==='hidden'){sys=true;resume()}
+  });
+  document.addEventListener('visibilitychange',()=>{if(sys&&document.visibilityState==='visible'){sys=false;if(v.paused)resume()}});
+  try{ // media keys / headset buttons are the user's own pause: handle them here so they are not undone
+    const ms=navigator.mediaSession;
+    ms.setActionHandler('play',()=>{own=0;v.play().catch(()=>{})});
+    ms.setActionHandler('pause',()=>v.pause());
+  }catch(_){}
+}
 v.addEventListener('loadedmetadata',()=>{if(audOn())mutePlayerAudio()});
 v.addEventListener('timeupdate',()=>{
   if(!audOn()||v.paused||aud.paused||v.seeking||!aud.getAttribute('src'))return;
@@ -890,6 +920,7 @@ const TABS={
     let c=sec(box,'Volume','vol');
     ctl(c,{t:'num',l:'Volume step (%)',d:'Change per arrow-key press or mouse-wheel notch.',k:'vstep',min:1,max:25});
     ctl(c,{t:'seg',l:'Maximum volume',d:'Above 100% the sound is amplified in software, which can distort or be very loud.',k:'maxVol',opts:[[1,'100%'],[1.25,'125%'],[1.5,'150%'],[2,'200%']]});
+    ctl(c,{t:'seg',l:'Loudness boost',d:'Makes quiet movies and speech louder without distortion (a compressor with a peak limiter). Light is a gentle boost, Strong also evens out loud and quiet parts. Off = original sound.',k:'loud',opts:[['off','Off'],['light','Light'],['medium','Medium'],['strong','Strong']]});
     ctl(c,{t:'chk',l:'Remember volume',k:'remVol'});
     note(c,'Change the volume with the up / down keys, the mouse wheel or by swiping up / down on the right side. Press M to mute. Audio track: use the headphones button in the control bar.');
   }},

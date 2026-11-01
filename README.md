@@ -168,5 +168,9 @@ The control bar sits below the picture and never covers it. Settings → General
 ## v1.5.5
 - Online files: the embedded subtitle is ON by default again (and can be switched off / on as usual).
 
+## Unreleased
+- **Loudness boost** (Settings → Audio): Off / Light / Medium / Strong. Quiet sound and dialogue come up about 3 / 6 / 9 dB, loud scenes stay about the same, a peak limiter prevents distortion. Default: Medium. The "Maximum volume" setting still works on top of it.
+- Playback no longer pauses when the window is minimized or covered by another window.
+
 ## v1.6.0
 - Release setup: per-user installer, auto-update ("Update now" installs in the same place), About page with version / license / donate, Git + GitHub Actions. Details in [CHANGELOG.md](CHANGELOG.md).
