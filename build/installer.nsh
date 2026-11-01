@@ -32,39 +32,40 @@ Var npStart
 !macroend
 
 ; ---- 2. Options page: "Set NixPlayer as default player" ---------------------------------
+; The functions live INSIDE the macro on purpose: ${isUpdated} needs the StdUtils plugin, and electron-builder only
+; registers that plugin folder after this file is included, so at top level makensis says "Plugin not found".
 !macro customPageAfterChangeDir
+  Function npOptionsCreate
+    ${If} ${isUpdated}
+      Abort
+    ${EndIf}
+    !insertmacro MUI_HEADER_TEXT "Choose Options" "Choose how NixPlayer should integrate with Windows."
+    nsDialogs::Create 1018
+    Pop $npDlg
+    ${If} $npDlg == error
+      Abort
+    ${EndIf}
+    ${NSD_CreateCheckbox} 0 6u 100% 12u "Set NixPlayer as the default player for video and audio files"
+    Pop $npChkDefault
+    ${NSD_SetState} $npChkDefault $npSetDefault
+    ${NSD_CreateLabel} 12u 20u 94% 24u "Windows asks you to confirm this once: after the installation its Default apps page for NixPlayer opens - choose 'Set default' there."
+    Pop $0
+    ${NSD_CreateCheckbox} 0 52u 100% 12u "Create a Desktop shortcut"
+    Pop $npChkDesktop
+    ${NSD_SetState} $npChkDesktop $npDesktop
+    ${NSD_CreateCheckbox} 0 70u 100% 12u "Create a Start Menu shortcut"
+    Pop $npChkStart
+    ${NSD_SetState} $npChkStart $npStart
+    nsDialogs::Show
+  FunctionEnd
+
+  Function npOptionsLeave
+    ${NSD_GetState} $npChkDefault $npSetDefault
+    ${NSD_GetState} $npChkDesktop $npDesktop
+    ${NSD_GetState} $npChkStart $npStart
+  FunctionEnd
   Page custom npOptionsCreate npOptionsLeave
 !macroend
-
-Function npOptionsCreate
-  ${If} ${isUpdated}
-    Abort
-  ${EndIf}
-  !insertmacro MUI_HEADER_TEXT "Choose Options" "Choose how NixPlayer should integrate with Windows."
-  nsDialogs::Create 1018
-  Pop $npDlg
-  ${If} $npDlg == error
-    Abort
-  ${EndIf}
-  ${NSD_CreateCheckbox} 0 6u 100% 12u "Set NixPlayer as the default player for video and audio files"
-  Pop $npChkDefault
-  ${NSD_SetState} $npChkDefault $npSetDefault
-  ${NSD_CreateLabel} 12u 20u 94% 24u "Windows asks you to confirm this once: after the installation its Default apps page for NixPlayer opens - choose 'Set default' there."
-  Pop $0
-  ${NSD_CreateCheckbox} 0 52u 100% 12u "Create a Desktop shortcut"
-  Pop $npChkDesktop
-  ${NSD_SetState} $npChkDesktop $npDesktop
-  ${NSD_CreateCheckbox} 0 70u 100% 12u "Create a Start Menu shortcut"
-  Pop $npChkStart
-  ${NSD_SetState} $npChkStart $npStart
-  nsDialogs::Show
-FunctionEnd
-
-Function npOptionsLeave
-  ${NSD_GetState} $npChkDefault $npSetDefault
-  ${NSD_GetState} $npChkDesktop $npDesktop
-  ${NSD_GetState} $npChkStart $npStart
-FunctionEnd
 
 ; ---- 3. Finish page: run NixPlayer + open Default apps ---------------------------------
 !macro customFinishPage
