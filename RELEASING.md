@@ -1,21 +1,18 @@
 # Releasing NixPlayer
 
-Source code lives in a **private** repo. Installers go to a separate **public** repo
-(`nixnasim/nixplayer-releases`), because the auto-updater has to download them without a password.
+Everything lives in ONE public repo (`nixnasim/nixplayer`): the code, the history and the installers (GitHub "Releases").
+The auto-updater downloads from that repo's Releases page, so no password or token is needed.
 
-## One-time setup (about 10 minutes)
+## One-time setup (about 5 minutes, no commands)
 
-1. **Private source repo**: on GitHub create a repo (for example `nixplayer`), visibility **Private**, empty (no README).
-   In this folder run:
-   ```
-   git remote add origin https://github.com/nixnasim/nixplayer.git
-   git push -u origin main
-   ```
-2. **Public releases repo**: create `nixplayer-releases`, visibility **Public**. Upload the files from `nixplayer-releases-template/`
-   (README, FUNDING.yml). It holds only installers and release notes, never the source.
-3. **Token**: GitHub → Settings → Developer settings → Fine-grained tokens → new token, only repository `nixplayer-releases`,
-   permission *Contents: Read and write*. In the private repo: Settings → Secrets and variables → Actions → new secret `RELEASES_TOKEN` = that token.
-4. If your GitHub username or the repo names are different, change them in `package.json` (`build.publish`, `homepage`, `nixplayer.homepage`).
+1. Install GitHub Desktop (desktop.github.com), sign in, then File → Add local repository → this folder.
+2. Publish repository → **untick** "Keep this code private" → Publish.
+3. On github.com open the repo → Actions tab → enable workflows → Release → Run workflow. In 5-10 minutes the installer
+   appears under the repo's Releases.
+4. If your GitHub username or the repo name is different, change them in `package.json` (`build.publish`, `homepage`, `nixplayer.homepage`).
+   If the build fails with a 403 error: repo → Settings → Actions → General → Workflow permissions → "Read and write permissions".
+
+Because the repo is public, the source code is visible to everyone (the `LICENSE` still forbids copying or modifying it).
 
 ## Every update
 
@@ -38,14 +35,14 @@ GitHub Actions builds the installer and publishes it. Users with NixPlayer insta
 Add a line to `CHANGELOG.md` for each release; you can paste it into the release notes on GitHub.
 
 **Build by hand instead (optional):** `npm install`, then `npm run dist` (installer in `dist/`, nothing published)
-or `set GH_TOKEN=<token>` and `npm run release`.
+or set `GH_TOKEN` to a personal access token and run `npm run release`.
 
 ## Important rules for updates
 
 - Never change `appId` in `package.json` (`com.nixplayer.app`): it is how Windows and the updater know it is the same app.
   (If you rename the app, rename `productName`, but keep or consciously migrate the `appId`.)
 - The version must always go up. Do not re-use a version number.
-- Do not delete old releases in the releases repo while people may still run them.
+- Do not delete old releases while people may still run them.
 
 ## Windows SmartScreen
 
@@ -56,4 +53,4 @@ individuals, needs an MSIX/AppX build and the store's review), or a code-signing
 ## Donate button
 
 Set your link in `package.json` → `"nixplayer": { "donateUrl": "https://..." }`.
-The "Donate" button appears in Settings → About only when this is filled. Also edit `nixplayer-releases-template/.github/FUNDING.yml`.
+The "Donate" button appears in Settings → About only when this is filled. Also edit `.github/FUNDING.yml` (shows a Sponsor button on the repo).

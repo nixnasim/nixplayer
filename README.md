@@ -2,6 +2,12 @@
 
 A simple desktop video player built with Electron, with a clean custom top bar.
 
+## Download
+
+Get the newest `NixPlayer-Setup-x.y.z.exe` from the **[Releases](../../releases/latest)** page and run it. NixPlayer then updates itself ("Update now / Later").
+Windows may say "Windows protected your PC" because the app is new and not code-signed yet: click **More info → Run anyway**.
+Bugs and ideas: open an **Issue** on this page.
+
 ## Run it
 
 1. Install Node.js (LTS) from https://nodejs.org
@@ -25,7 +31,7 @@ The installer appears in `dist/` (`NixPlayer-Setup-<version>.exe`). The first in
 ## Updates, versions and releases
 
 - **Users:** NixPlayer checks for updates at start and every 6 hours (also Settings → About → Check for updates). When a new version exists it asks **Update now / Later**. "Update now" downloads it, installs it in the same folder as the current install and opens NixPlayer again.
-- **You (developer):** the code is tracked with Git, so `git diff` / `git log` show exactly what changed. To publish a new version: `npm version patch`, then `git push --follow-tags`. GitHub Actions builds the installer and publishes it. Full steps and the one-time setup (private source repo + public releases repo + token) are in [RELEASING.md](RELEASING.md).
+- **You (developer):** the code is tracked with Git, so `git diff` / `git log` show exactly what changed. To publish a new version: `npm version patch`, then `git push --follow-tags`. GitHub Actions builds the installer and publishes it. Full steps and the one-time setup (one public repo, no token) are in [RELEASING.md](RELEASING.md).
 - Version history: [CHANGELOG.md](CHANGELOG.md).
 
 ## Support, license, credits

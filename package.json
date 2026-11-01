@@ -6,7 +6,7 @@
   "author": "Nasimul Islam Nasim",
   "nixplayer": {
     "donateUrl": "",
-    "homepage": "https://github.com/nixnasim/nixplayer-releases"
+    "homepage": "https://github.com/nixnasim/nixplayer"
   },
   "license": "SEE LICENSE IN LICENSE",
   "scripts": {
@@ -96,7 +96,7 @@
       {
         "provider": "github",
         "owner": "nixnasim",
-        "repo": "nixplayer-releases",
+        "repo": "nixplayer",
         "releaseType": "release"
       }
     ],
@@ -107,5 +107,5 @@
     "ffmpeg-static": "^5.2.0",
     "hls.js": "^1.5.17"
   },
-  "homepage": "https://github.com/nixnasim/nixplayer-releases"
+  "homepage": "https://github.com/nixnasim/nixplayer"
 }

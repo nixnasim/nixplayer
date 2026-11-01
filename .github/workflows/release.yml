@@ -1,5 +1,5 @@
 # Push a tag like v1.6.1 and this builds the Windows installer and publishes it
-# (installer + latest.yml, which the in-app updater reads) to the PUBLIC releases repo.
+# (installer + latest.yml, which the in-app updater reads) as a GitHub Release of this same repo.
 name: Release
 
 on:
@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write   # lets the built-in token create the release
 
 jobs:
   windows:
@@ -23,5 +23,4 @@ jobs:
       - name: Build and publish
         run: npx electron-builder --win --publish always
         env:
-          # fine-grained token with "Contents: read and write" on the releases repo only
-          GH_TOKEN: ${{ secrets.RELEASES_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}   # provided by GitHub, nothing to create
