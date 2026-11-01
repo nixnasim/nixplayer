@@ -46,8 +46,10 @@
           "ogg",
           "m4a"
         ],
-        "name": "Media file",
-        "role": "Viewer"
+        "name": "NixPlayer.Media",
+        "role": "Viewer",
+        "description": "NixPlayer Media File",
+        "icon": "fileicon.ico"
       }
     ],
     "win": {
@@ -68,7 +70,16 @@
       "runAfterFinish": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "deleteAppDataOnUninstall": false
+      "deleteAppDataOnUninstall": false,
+      "shortcutName": "NixPlayer",
+      "license": "LICENSE",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico",
+      "installerSidebar": "build/installerSidebar.bmp",
+      "uninstallerSidebar": "build/uninstallerSidebar.bmp",
+      "installerHeader": "build/installerHeader.bmp",
+      "include": "build/installer.nsh"
     },
     "protocols": [
       {

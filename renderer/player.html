@@ -30,21 +30,52 @@ video::-webkit-media-text-track-container{display:none!important}
 #subs.top{justify-content:flex-start}
 #subs span,.sp-pv span{display:inline-block;max-width:92%;color:var(--sc);font-family:var(--sf,inherit);font-weight:600;line-height:1.25;white-space:pre-wrap;word-break:break-word;background:var(--sb);padding:.05em .4em;border-radius:.15em;box-decoration-break:clone;-webkit-box-decoration-break:clone}
 #subs.ol span,.sp-pv.ol span{text-shadow:0 0 .09em #000,0 0 .09em #000,.055em .055em .06em #000,-.055em .055em .06em #000,.055em -.055em .06em #000,-.055em -.055em .06em #000,0 .07em .08em #000,0 -.07em .08em #000,.07em 0 .08em #000,-.07em 0 .08em #000}
-#empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;color:#a9acd6;padding:20px;overflow:hidden;background:radial-gradient(ellipse 60% 55% at 50% 42%,#1d2060 0,#14164a 45%,#0e0f33 100%)}
-#empty::before{content:'';position:absolute;width:520px;height:520px;left:50%;top:42%;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(39,185,214,.16),rgba(91,79,176,.10) 45%,transparent 70%);pointer-events:none}
-#empty .eh{position:relative;display:flex;flex-direction:column;align-items:center;gap:0}
-#empty .elg{width:104px;height:104px;border-radius:24px;box-shadow:0 12px 40px rgba(39,185,214,.25),0 0 0 1px rgba(255,255,255,.06);pointer-events:none}
-#empty .en{margin-top:18px;font-size:30px;font-weight:700;letter-spacing:.01em;background:linear-gradient(90deg,#2fc3df,#5b6fd0 60%,#6a58b8);-webkit-background-clip:text;background-clip:text;color:transparent;pointer-events:none}
-#empty .em{margin-top:6px;font-size:14px;color:#9ea2cf;pointer-events:none}
-#empty .eb{display:flex;gap:10px;margin-top:22px}
-#empty .eb button{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:999px;padding:10px 20px;font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;color:#fff;background:linear-gradient(135deg,#25b8d6,#5a4fb0);box-shadow:0 6px 18px rgba(46,120,200,.35);transition:transform .12s,filter .12s}
-#empty .eb button.g{background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1px rgba(150,160,255,.28);color:#c9ccf0}
-#empty .eb button:hover{filter:brightness(1.12);transform:translateY(-1px)}
-#empty .ek{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 18px;margin-top:30px;font-size:12px;color:#7f83b8;pointer-events:none}
-#empty .ek span{display:inline-flex;align-items:center;gap:5px}
-#empty kbd{font:600 11px system-ui,sans-serif;color:#c9ccf0;background:rgba(255,255,255,.07);border:1px solid rgba(150,160,255,.25);border-bottom-width:2px;border-radius:5px;padding:1px 6px}
+/* ---------- home screen (empty state): themed, light + dark ---------- */
+:root{--hbg:#0d0e2e;--hbg2:#15174a;--hglow1:rgba(37,184,214,.20);--hglow2:rgba(106,88,184,.28);--hfg:#e8eaff;--hfg2:#9ea2cf;--hfg3:#7478ad;--hcard:rgba(255,255,255,.045);--hcardb:rgba(150,160,255,.22);--hghost:rgba(255,255,255,.07);--hghostt:#d6d9f7;--hkbd:rgba(255,255,255,.07);--hkbdb:rgba(150,160,255,.28);--hshadow:0 20px 60px rgba(0,0,0,.45);--htitle:linear-gradient(90deg,#3fd0ea,#7c8cf0 60%,#8a70d8);--htile:#12143d;--hgrad:linear-gradient(135deg,#25b8d6,#5a4fb0)}
+:root[data-theme=light]{--hbg:#f4f6ff;--hbg2:#e6eafd;--hglow1:rgba(37,184,214,.22);--hglow2:rgba(106,88,184,.16);--hfg:#14163f;--hfg2:#4f5486;--hfg3:#7d82ae;--hcard:rgba(255,255,255,.72);--hcardb:rgba(90,79,176,.28);--hghost:#fff;--hghostt:#3a3f7a;--hkbd:#fff;--hkbdb:#cfd3ef;--hshadow:0 20px 50px rgba(60,60,140,.14);--htitle:linear-gradient(90deg,#14a5c6,#4a5fc4 60%,#5a4fb0);--htile:#fff}
+#empty{position:absolute;inset:0;display:flex;overflow:auto;text-align:center;color:var(--hfg);font-family:Inter,"Segoe UI",system-ui,sans-serif;background:radial-gradient(ellipse 70% 60% at 50% 38%,var(--hbg2),var(--hbg) 70%)}
+#empty::before{content:'';position:absolute;width:900px;height:900px;left:50%;top:36%;transform:translate(-50%,-50%);background:radial-gradient(circle,var(--hglow1),var(--hglow2) 45%,transparent 70%);pointer-events:none}
+#empty .eh{position:relative;z-index:2;margin:auto;padding:28px 20px;display:flex;flex-direction:column;align-items:center;width:100%}
+#empty .tile{width:104px;height:104px;border-radius:26px;background:var(--htile);display:grid;place-items:center;box-shadow:0 14px 44px rgba(37,184,214,.28),0 0 0 1px var(--hcardb);pointer-events:none}
+#empty .tile img{width:78px}
+#empty .en{margin-top:16px;font-size:38px;font-weight:800;letter-spacing:-.01em;background:var(--htitle);-webkit-background-clip:text;background-clip:text;color:transparent;pointer-events:none}
+#empty .tag{margin-top:2px;font-size:15px;color:var(--hfg2);letter-spacing:.14em;text-transform:uppercase;font-weight:500;pointer-events:none}
+#empty .drop{margin-top:30px;width:min(620px,94%);height:170px;border-radius:24px;border:2px dashed var(--hcardb);background:var(--hcard);box-shadow:var(--hshadow);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;transition:border-color .15s,transform .15s}
+#empty .drop:hover{border-color:#25b8d6;transform:translateY(-1px)}
+#empty .drop .ic{width:48px;height:48px;border-radius:50%;background:var(--hgrad);display:grid;place-items:center;box-shadow:0 8px 22px rgba(37,184,214,.35);margin-bottom:5px}
+#empty .drop b{font-size:17px;font-weight:600;color:var(--hfg)}
+#empty .em{font-size:13px;color:var(--hfg3);padding:0 16px}
+#empty .eb{display:flex;gap:12px;margin-top:20px}
+#empty .eb button{display:inline-flex;align-items:center;gap:9px;border:0;border-radius:999px;padding:12px 26px;font:600 14px Inter,"Segoe UI",system-ui,sans-serif;cursor:pointer;color:#fff;background:var(--hgrad);box-shadow:0 8px 22px rgba(70,90,200,.35);transition:filter .15s,transform .15s}
+#empty .eb button.g{background:var(--hghost);color:var(--hghostt);box-shadow:inset 0 0 0 1px var(--hcardb)}
+#empty .eb button:hover{filter:brightness(1.08);transform:translateY(-1px)}
+#empty .rec{display:none;margin-top:34px;width:min(1000px,94%);text-align:left}
+#empty .rec.on{display:block}
+#empty .rec h3{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--hfg3);font-weight:700;margin:0 0 10px;display:flex;justify-content:space-between;align-items:center}
+#empty .rec h3 button{border:0;background:none;color:#25b8d6;font:600 13px Inter,"Segoe UI",system-ui,sans-serif;letter-spacing:.02em;text-transform:none;cursor:pointer;padding:0}
+#empty .rec h3 button:hover{text-decoration:underline}
+#empty .row{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px}
+#empty .cd{border-radius:16px;background:var(--hcard);box-shadow:inset 0 0 0 1px var(--hcardb);overflow:hidden;cursor:pointer;transition:transform .15s,box-shadow .15s}
+#empty .cd:hover{transform:translateY(-2px);box-shadow:inset 0 0 0 1px #25b8d6}
+#empty .cth{height:100px;width:100%;position:relative;display:block;background:linear-gradient(135deg,#2a6f8f,#1b1f5e) center/cover no-repeat}
+#empty .cth i{position:absolute;left:0;bottom:0;height:4px;background:var(--hgrad)}
+#empty .cth s{position:absolute;right:8px;bottom:10px;font:600 11px Inter,"Segoe UI",sans-serif;color:#fff;background:rgba(0,0,0,.55);padding:2px 6px;border-radius:5px;text-decoration:none}
+#empty .cd p{margin:0;padding:9px 12px 11px;font-size:12.5px;line-height:1.35;color:var(--hfg);overflow:hidden}
+#empty .cd p b{display:block;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#empty .cd p small{display:block;color:var(--hfg3);font-size:11.5px;margin-top:2px}
+#empty .ek{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 26px;margin-top:24px;font-size:12px;color:var(--hfg3);pointer-events:none}
+#empty .ek span{display:inline-flex;align-items:center;gap:4px}
+#empty kbd{font:600 11px Inter,"Segoe UI",system-ui,sans-serif;color:var(--hghostt);background:var(--hkbd);border:1px solid var(--hkbdb);border-bottom-width:2px;border-radius:5px;padding:1px 7px}
 #empty .ek kbd+kbd{margin-left:-2px}
-#empty .ek span{gap:4px}
+@media (max-height:760px){#empty .rec{display:none!important}}
+@media (max-height:540px){#empty .drop,#empty .ek{display:none}}
+/* top bar + bottom control bar follow the theme (layout and icons are unchanged) */
+:root.home #top,:root.home #bar{--bgx:#15163a;--bdx:#262a5a;--fg:#e4e7ff;--fg2:#b4b9e6;--fg3:#7f84b8;--fgh:#fff;--trk:#2d3166;--bg3:#2d3166;--bd2:#3a3f80}
+:root.home[data-theme=light] #top,:root.home[data-theme=light] #bar{--bgx:#f8f9ff;--bdx:#dde1f6;--fg:#1a1d4d;--fg2:#3f4585;--fg3:#7d82ae;--fgh:#0b0d33;--trk:#d3d8f2;--bg3:#d3d8f2;--bd2:#bfc5ea}
+.home #top,.home #bar{background:var(--bgx)!important;border-color:var(--bdx)!important}
+/* only on the home screen; while a video is open the bars use the normal grey light / dark look */
+.home #top::after,.home #bar::before{content:'';position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,#25b8d6,#5a4fb0,transparent);opacity:.55;pointer-events:none}
+.home #top::after{bottom:-1px}.home #bar::before{top:-1px}
 #hud{position:absolute;top:14px;left:14px;z-index:15;display:flex;align-items:center;gap:9px;color:#fff;background:rgba(18,18,18,.8);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);padding:7px 13px 7px 11px;border-radius:9px;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:0;transform:translateY(-4px);transition:opacity .18s,transform .18s;pointer-events:none}
 #hud.show{opacity:1;transform:none}#hud .ic{width:18px;height:18px;color:var(--ac)}
 #hud .hb{width:84px;height:4px;border-radius:2px;background:rgba(255,255,255,.22);overflow:hidden}#hud .hb b{display:block;height:100%;background:var(--ac);border-radius:2px}
@@ -54,11 +85,14 @@ video::-webkit-media-text-track-container{display:none!important}
 body.ah #bar,body.full #bar{position:fixed;left:0;right:0;bottom:0}
 body.ah.idle #bar,body.full.idle #bar{opacity:0}.idle{cursor:none}
 body.ah #pop,body.full #pop{bottom:76px}
+/* playlist / history never sit under the floating bottom bar */
+body.full.showbar .side,body.ah:not(.full):not(.idle) .side{bottom:var(--barh,76px)}
+body.full .side{border-bottom:0}
 /* fullscreen: top and bottom bars slide away, mouse to the top / bottom edge brings them back */
 .full #top{position:absolute;top:0;left:0;right:0;z-index:40;transform:translateY(-100%);transition:transform .18s}
 .full.showtop #top{transform:none}
-.full #bar{transform:translateY(100%);transition:transform .18s,opacity .25s}
-.full:not(.showtop) #top{-webkit-app-region:no-drag}.full.showtop .side{top:32px}
+.full #bar{transform:translateY(calc(100% + 28px));transition:transform .18s,opacity .25s}
+.full #top{-webkit-app-region:no-drag}.full.showtop .side{top:32px}/* no drag area in fullscreen, so a double click on the title bar reaches the page (leaves fullscreen, see desktop.js) */
 .full.showbar #bar{transform:none}
 #sk{display:flex;align-items:center;gap:10px}
 .tt{font-size:12px;color:var(--fg2);min-width:42px;font-variant-numeric:tabular-nums}#t2{text-align:right}
@@ -66,16 +100,22 @@ body.ah #pop,body.full #pop{bottom:76px}
 #tl{width:100%;height:4px;background:var(--trk);position:relative}
 #fill{height:100%;background:var(--ac);width:0}
 #tlw:hover #tl{height:6px}
+#tlw .bmk{position:absolute;top:-20px;width:16px;height:36px;margin-left:-8px;cursor:pointer;z-index:3}
+#tlw .bmk svg{position:absolute;left:1px;top:0;width:14px;height:18px;color:var(--ac);filter:drop-shadow(0 1px 1px rgba(0,0,0,.55));transition:transform .12s;transform-origin:50% 100%;pointer-events:none}
+#tlw .bmk::after{content:'';position:absolute;left:7px;bottom:2px;width:2px;height:12px;border-radius:1px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.35)}
+#tlw .bmk:hover svg{transform:scale(1.25)}
 #prev{position:absolute;bottom:22px;display:none;background:var(--inp);border:1px solid var(--bd2);border-radius:3px;padding:3px;text-align:center;font-size:12px;transform:translateX(-50%);pointer-events:none}
 #prev canvas{width:160px;height:90px;display:block;background:#000}
 .btns{display:flex;flex-wrap:wrap;gap:2px;align-items:center;margin-top:2px}
 .btns button{background:none;border:0;color:var(--fg);font-size:12px;font-weight:600;padding:5px 7px;border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;min-width:30px}
 .btns button:hover{background:var(--bg3);color:var(--fgh)}
 .btns button.on{color:var(--ac)}
+.btns{flex-wrap:nowrap;overflow:hidden}.btns button{flex:none}/* one row only: the window's minimum width is set so that every visible button fits (desktop.js fitMin) */
 .ic{width:18px;height:18px;flex:none;display:block}.ic.f{fill:currentColor}
 .sp{flex:1}
 #pop{position:absolute;z-index:14;right:10px;bottom:10px;min-width:220px;max-width:320px;max-height:60%;overflow:auto;background:var(--bg1);border:1px solid var(--bd);border-radius:4px;padding:10px;display:none}
 #pop h4{margin:0 0 8px;font-size:13px;color:var(--fg3)}
+#pop[data-k=sub],#pop[data-k=aud]{right:auto;left:10px}
 #pop.sp{width:348px;max-width:94%;padding:0;max-height:calc(100% - 96px)}
 .sp .sh{display:flex;align-items:center;gap:8px;padding:12px 14px 8px;font-weight:700;font-size:14px;color:var(--fgh)}.sp .sh .ic{width:17px;height:17px;color:var(--ac)}.sp .sh span{flex:1}
 .sp .sec{padding:8px 14px 10px;border-top:1px solid var(--bd)}.sp .sec:first-of-type{border-top:0}
@@ -136,7 +176,12 @@ body.ah #pop,body.full #pop{bottom:76px}
 #dmenu{position:absolute;top:30px;left:6px;width:280px;min-width:280px;white-space:nowrap;background:var(--bg1);border:1px solid var(--bd);border-radius:4px;padding:4px;display:none;-webkit-app-region:no-drag;box-shadow:0 6px 18px rgba(0,0,0,.5)}
 #dmenu .m{padding:7px 10px;border-radius:3px;cursor:pointer;display:flex;justify-content:space-between;gap:12px;font-size:13px;color:var(--fg)}
 #dmenu .m:hover{background:var(--bg3)}#dmenu .m small{color:var(--fg3)}#dmenu .m span{display:flex;align-items:center;gap:10px}#dmenu .m b{font-weight:400}#dmenu .m .ic{width:16px;height:16px;color:var(--fg3)}#dmenu .m:hover .ic{color:var(--ac)}
-#ttl{flex:1;text-align:center;color:var(--fg3);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 12px}
+#ttl{flex:1;min-width:0;text-align:center;color:var(--fg3);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 12px}
+/* the name does not fit (small window): it scrolls to the end and back (marquee) instead of being cut with "…" */
+#ttl.mq{text-align:left;text-overflow:clip}
+#ttl.mq span{display:inline-block;animation:ttlm var(--d,8s) ease-in-out infinite alternate;will-change:transform}
+@keyframes ttlm{0%,14%{transform:translateX(0)}86%,100%{transform:translateX(var(--x,0))}}
+@media (prefers-reduced-motion:reduce){#ttl.mq span{animation:none}}
 #tbtns{display:flex;height:100%}
 #tbtns button{width:46px;height:100%;display:flex;align-items:center;justify-content:center;padding:0}
 #tbtns button:hover{background:var(--bg3);color:var(--fgh)}
@@ -162,8 +207,10 @@ body.ah #pop,body.full #pop{bottom:76px}
 <div id="top"><div id="tlogo"><img src="logo.png" width="18" height="18" alt="" style="border-radius:4px;display:block"><button id="tmenu">NixPlayer</button><div id="dmenu"></div></div><div id="ttl"></div><div id="tbtns"></div></div>
 <div id="stage">
 <video id="v" playsinline crossorigin="anonymous"></video>
-<div id="empty"><div class="eh"><img class="elg" src="logo.png" alt=""><div class="en">NixPlayer</div><div class="em">Drop a video here or open one to start</div>
-<div class="eb"><button id="eOpen" type="button"><svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>Open file</button><button id="eUrl" type="button" class="g"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3A4 4 0 0 0 11 18.7l1-1"/></svg>Open link</button></div>
+<div id="empty"><div class="eh"><div class="tile"><img src="logo.png" alt=""></div><div class="en">NixPlayer</div><div class="tag">Play Your Way.</div>
+<div class="drop" id="eDrop"><div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M6 11l6 6 6-6M5 21h14"/></svg></div><b>Drop a video here</b><span class="em">MP4, MKV, AVI, MOV, WebM, MP3 and more - or paste a link</span></div>
+<div class="eb"><button id="eOpen" type="button"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>Open file</button><button id="eUrl" type="button" class="g"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3A4 4 0 0 0 11 18.7l1-1"/></svg>Open link</button></div>
+<div class="rec" id="eRec"><h3><span>Continue watching</span><button id="eClr" type="button">Clear history</button></h3><div class="row" id="eRow"></div></div>
 <div class="ek"><span><kbd>Space</kbd>Play</span><span><kbd>Enter</kbd><kbd>F11</kbd>Fullscreen</span><span><kbd>Ctrl</kbd><kbd>O</kbd>Open</span><span><kbd>Ctrl</kbd><kbd>,</kbd>Settings</span></div></div></div>
 <div id="subs"><span></span></div><div id="trtip"></div><div id="hud"></div><div id="mb" title="Muted"></div><div id="rec"></div>
 <div id="pop"></div>
@@ -261,20 +308,33 @@ function subDraw(){
   const R=subRect(),bar=$('#bar'),full=document.body.classList.contains('full'),
     ov=full||document.body.classList.contains('ah'),barUp=ov&&!st.classList.contains('idle')&&(!full||document.body.classList.contains('showbar'));
   const lift=!top&&barUp?Math.max(0,bar.offsetHeight-(R.H-(R.y+R.h))):0;
-  const fs=Math.max(12,R.h*.05*((S.ssz||24)/24)),pad=Math.round(R.h*((S.spos==null?5:S.spos)/100)+lift);
-  const geo=[R.x,R.y,R.w,R.h,fs,pad,top,S.sout!==false].map(n=>typeof n==='number'?Math.round(n):n).join('|');
+  const fs=Math.max(12,R.h*.05*((S.ssz||24)/24)),sp=S.spos==null?5:S.spos,
+    ext=top||sp>=0?0:Math.min(-sp/100*R.h,Math.max(0,R.H-(R.y+R.h))), /* lower than the picture: grow the box into the black bar, but never past the window */
+    pad=Math.round(R.h*(Math.max(0,sp)/100)+lift);
+  const geo=[R.x,R.y,R.w,R.h,ext,fs,pad,top,S.sout!==false].map(n=>typeof n==='number'?Math.round(n):n).join('|');
   if(txt!==subKey){subKey=txt;subTx.innerHTML=txt;window.trWrap&&trWrap(subTx)}
-  if(geo!==subGeo||subEl.style.display!=='flex'){subGeo=geo;const q=subEl.style;q.display='flex';q.left=R.x+'px';q.top=R.y+'px';q.width=R.w+'px';q.height=R.h+'px';q.fontSize=fs+'px';
+  if(geo!==subGeo||subEl.style.display!=='flex'){subGeo=geo;const q=subEl.style;q.display='flex';q.left=R.x+'px';q.top=R.y+'px';q.width=R.w+'px';q.height=(R.h+ext)+'px';q.fontSize=fs+'px';
     q.paddingBottom=top?'0':pad+'px';q.paddingTop=top?(R.h*.05)+'px':'0';subEl.classList.toggle('top',top);subEl.classList.toggle('ol',S.sout!==false)}
 }
 window.subLayout=()=>{subKey='\u0000';subGeo='';subDraw()};
 setInterval(subDraw,90);['seeked','loadedmetadata','emptied'].forEach(e=>v.addEventListener(e,()=>{subKey='\u0000';subDraw()}));
 
+/* the open Subtitles / Audio panel follows changes live (a subtitle added, a track found, ...) */
+const subSigNow=()=>JSON.stringify([extList.map(e=>e.k+'|'+e.label+'|'+e.info),curSub&&[curSub.label,!!curSub.emb,!!curSub.ext],subOn,v.textTracks?v.textTracks.length:0,window.subActive?subActive():'',window.panelSig?panelSig():'',S.sdelay||0]);
+let subSigOld='',audSigOld=null;
+setInterval(()=>{
+  if(P.style.display!=='block'){audSigOld=null;return}
+  if(P.dataset.k==='sub'){const n=subSigNow();if(n!==subSigOld){const sc=P.scrollTop;subPanel(P);P.scrollTop=sc}}
+  if(P.dataset.k!=='aud'){audSigOld=null;return}
+  const n=window.panelSig?panelSig():'';
+  if(audSigOld===null)audSigOld=n;
+  else if(n!==audSigOld){audSigOld=n;if(window.audRebuild)audRebuild()}
+},350);
 /* ---- subtitle menu: tracks, timing and look in one place; every change applies immediately ---- */
 const SUB_SIZES=[['Small',18],['Medium',24],['Large',32],['Extra large',42]],SUB_COLORS=['#ffffff','#ffd400','#00e5ff','#8aff6b'];
 const subBgMode=()=>!(S.sbo>0)?0:S.sbo<=.7?1:2;
 function subPanel(p){
-  P.className='sp';p.innerHTML='';
+  P.className='sp';p.innerHTML='';subSigOld=subSigNow();
   const E=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
   const redo=()=>{const sc=P.scrollTop;subPanel(P);P.scrollTop=sc};
   const apply=()=>{style();save();window.subLayout&&subLayout();redo()};
@@ -312,7 +372,14 @@ function subPanel(p){
   chips('Background',['Outline only','Dim box','Solid box'],subBgMode(),i=>{if(i===0){S.sbo=0;S.sout=true}else{S.sbo=i===1?.55:.9;S.sout=false}apply()});
   const pr=E('div','sx');pr.append(E('div','st','Position'));pr.firstChild.style.margin='0';pr.firstChild.style.flex='1';
   const po=E('output',null,(S.spos==null?5:S.spos)+'%');
-  const mv=(t,n)=>{const b=E('button',null,t);b.onclick=()=>{S.spos=Math.max(0,Math.min(40,(S.spos==null?5:S.spos)+n));save();window.subLayout&&subLayout();po.textContent=S.spos+'%'};return b};
+  /* click = one step; press and hold = keeps moving slowly (stops when you let go) */
+  const mv=(t,n)=>{const b=E('button',null,t);let t1=0,t2=0,held=false;
+    const step=()=>{const R=subRect(),lo=-Math.floor(Math.max(0,R.H-(R.y+R.h))/Math.max(1,R.h)*100);const cur=S.spos==null?5:S.spos,nx=Math.max(lo,Math.min(40,cur+n));if(nx===cur)return false;S.spos=nx;window.subLayout&&subLayout();po.textContent=S.spos+'%';return true};
+    const stop=()=>{clearTimeout(t1);clearInterval(t2);if(held){held=false;save()}};
+    b.onpointerdown=e=>{if(e.button)return;held=true;try{b.setPointerCapture(e.pointerId)}catch(_){}step();t1=setTimeout(()=>{t2=setInterval(()=>{if(!step())stop()},70)},380)};
+    b.onpointerup=stop;b.onpointercancel=stop;b.onlostpointercapture=stop;
+    b.onclick=e=>{if(e.detail===0){step();save()}}; /* keyboard (Enter / Space) */
+    return b};
   pr.append(mv('▼ Lower',-1),po,mv('▲ Higher',1));s.append(pr);p.append(s);
   const ft=E('div','ft'),fa=E('button');fa.innerHTML=ico('settings')+'<span>All subtitle settings</span>';fa.onclick=()=>{P.style.display='none';window.openSettings&&openSettings('Subtitles')};
   const rr=E('button');rr.innerHTML=ico('reset')+'<span>Reset look</span>';rr.onclick=()=>{S.ssz=24;S.sc='#ffffff';S.sb='#000000';S.sbo=0;S.sout=true;S.spos=5;apply()};ft.append(fa,rr);p.append(ft);
@@ -328,7 +395,15 @@ const row=(p,t,fn,sel)=>{const d=document.createElement('div');d.className='r'+(
 const head=(p,t)=>{const h=document.createElement('h4');h.textContent=t;p.appendChild(h)};
 const rng=(p,min,max,step,val,fn)=>{const i=document.createElement('input');i.type='range';i.min=min;i.max=max;i.step=step;i.value=val;i.oninput=()=>fn(+i.value);p.appendChild(i)};
 const BM=()=>{try{return JSON.parse(localStorage.getItem('bm:'+name)||'[]')}catch(e){return[]}};
-const BMs=a=>{try{localStorage.setItem('bm:'+name,JSON.stringify(a))}catch(e){}};
+const BMs=a=>{try{localStorage.setItem('bm:'+name,JSON.stringify(a))}catch(e){}renderBMM()};
+/* bookmark markers on the timeline: click one to jump to it */
+function renderBMM(){
+  const tw=$('#tlw');if(!tw)return;tw.querySelectorAll('.bmk').forEach(n=>n.remove());
+  const d=v.duration;if(!name||!isFinite(d)||!d)return;
+  BM().forEach(t=>{if(t>d)return;const m=document.createElement('i');m.className='bmk';m.innerHTML='<svg viewBox="0 0 14 18"><path fill="currentColor" stroke="rgba(0,0,0,.4)" stroke-width=".8" d="M2.2 .6h9.6a1.2 1.2 0 0 1 1.2 1.2v15.2l-6-4.2-6 4.2V1.8A1.2 1.2 0 0 1 2.2 .6z"/></svg>';m.style.left=(t/d*100)+'%';m.title='Bookmark '+fmt(t)+' - click to jump';
+    m.addEventListener('pointerdown',e=>e.stopPropagation());
+    m.addEventListener('click',e=>{e.stopPropagation();v.currentTime=t;hud('Bookmark · '+fmt(t),'bm')});tw.appendChild(m)})}
+['durationchange','loadedmetadata','emptied'].forEach(e=>v.addEventListener(e,renderBMM));
 function addBM(){if(!name)return;const a=BM();a.push(Math.round(v.currentTime));a.sort((x,y)=>x-y);BMs([...new Set(a)]);hud('Bookmark added · '+fmt(v.currentTime),'bmadd')}
 /* thumbnails: one hidden <video> at a time, results cached ({img,dur}) */
 const TC=new Map();let tq=Promise.resolve();
@@ -379,7 +454,7 @@ const B=[
 ['next','next','Next (PageDown)',()=>window.deskNext&&deskNext()],
 ['sub','cc','Subtitles (Y = on/off)',()=>pop('sub',subPanel)],
 ['aud','aud','Audio track',()=>pop('aud',p=>{head(p,'Audio track');const a=v.audioTracks;if(!a||a.length<2){p.append('This player cannot see more than one audio track in this file.');return}for(let i=0;i<a.length;i++)row(p,(a[i].label||'Track '+(i+1))+' '+(a[i].language||''),()=>{for(let j=0;j<a.length;j++)a[j].enabled=j==i;hud(a[i].label||('Track '+(i+1)),'aud')},a[i].enabled)})],
-['spd','speed','Speed',()=>pop('spd',p=>{head(p,'Speed');[.5,.75,1,1.25,1.5,2,3].forEach(r=>row(p,r+'x',()=>{v.playbackRate=r;hud(r+'x');upd()},v.playbackRate==r))})],
+['spd','speed','Speed',()=>pop('spd',p=>{head(p,'Speed');[.5,.75,1,1.25,1.5,1.75,2,3].forEach(r=>row(p,r+'x',()=>{v.playbackRate=r;hud(r+'x');upd()},v.playbackRate==r))})],
 ['bri','bri','Brightness',()=>pop('bri',p=>{head(p,'Brightness');rng(p,.3,2,.01,bright,setB)})],
 ['bm','bm','Bookmarks (B)',()=>pop('bm',p=>{head(p,'Bookmarks');const b=document.createElement('button');b.className='btn2';b.innerHTML=ico('plus')+'<span>Add bookmark here</span>';b.onclick=()=>{addBM();P.style.display='none'};p.appendChild(b);
  const a=BM();if(!a.length){const e=document.createElement('div');e.style.cssText='color:var(--fg3);padding:6px 2px';e.textContent='No bookmarks yet (press B)';p.appendChild(e)}
@@ -412,7 +487,13 @@ function buildMenu(){
 }
 tmn.onclick=e=>{e.stopPropagation();if(dmn.style.display=='block'&&!dmn.dataset.ctx)dmn.style.display='none';else{homeMenu();buildMenu();dmn.style.display='block'}};
 document.addEventListener('click',()=>dmn.style.display='none');
-new MutationObserver(()=>{const t=document.title.replace(/ — NixPlayer$/,'');$('#ttl').textContent=t=='NixPlayer'?'':t}).observe($('title'),{childList:true,subtree:true,characterData:true});
+/* movie name in the top bar; when it is wider than the bar, it scrolls (marquee) */
+const ttlFit=()=>{const T=$('#ttl'),s=T.firstChild;if(!s||s.nodeType!==1)return;T.classList.remove('mq');
+ const over=s.offsetWidth-(T.clientWidth-24);
+ if(over>1){T.style.setProperty('--x',-Math.ceil(over)+'px');T.style.setProperty('--d',Math.max(5,Math.ceil(over/28)+3)+'s');T.classList.add('mq')}};
+const setTtl=()=>{const t=document.title.replace(/ — NixPlayer$/,'');const T=$('#ttl');T.textContent='';if(t&&t!='NixPlayer'){const s=document.createElement('span');s.textContent=t;T.appendChild(s)}T.title=t=='NixPlayer'?'':t;ttlFit()};
+new MutationObserver(setTtl).observe($('title'),{childList:true,subtree:true,characterData:true});
+try{new ResizeObserver(ttlFit).observe($('#ttl'))}catch(e){}
 
 function upd(){bt.play.innerHTML=ico(v.paused?'play':'pause','f');bt.spd.textContent=v.playbackRate+'x';bt.sub.classList.toggle('on',subOn&&!!v.textTracks[0])}
 ['play','pause','volumechange','ratechange'].forEach(e=>v.addEventListener(e,upd));
@@ -430,7 +511,7 @@ st.ondragover=e=>e.preventDefault();st.ondrop=e=>{e.preventDefault();if(window.d
 let g=null,ct;
 /* mouse actions (Settings → Shortcuts → Mouse buttons): none / play / fs / mute. With probe=1 it only tells whether the action does anything */
 function mAct(a,probe){if(!a||a==='none')return false;if(!probe)({play:toggle,fs:fs,mute:mute})[a]?.();return true}
-st.addEventListener('pointerdown',e=>{if(e.button||e.target.closest('#bar,#pop,#dlg,.side'))return;P.style.display='none';const w=st.clientWidth,z=S.gest===false?'c':e.clientX<w*.3?'l':e.clientX>w*.7?'r':'c';g={x:e.clientX,y:e.clientY,z,t:setTimeout(()=>{if(S.holdOn===false)return;g.hold=true;g.rate=v.playbackRate;v.playbackRate=S.hold;hud(S.hold+'x speed','ffwd')},350)};st.setPointerCapture(e.pointerId)});
+st.addEventListener('pointerdown',e=>{if(e.button||e.target.closest('#bar,#pop,#dlg,.side'))return;{const op=[...document.querySelectorAll('.side')].filter(x=>x.style.display==='flex');if(op.length){op.forEach(x=>x.style.display='none');g=null;return}}P.style.display='none';const w=st.clientWidth,z=S.gest===false?'c':e.clientX<w*.3?'l':e.clientX>w*.7?'r':'c';g={x:e.clientX,y:e.clientY,z,t:setTimeout(()=>{if(S.holdOn===false)return;g.hold=true;g.rate=v.playbackRate;v.playbackRate=S.hold;hud(S.hold+'x speed','ffwd')},350)};st.setPointerCapture(e.pointerId)});
 /* only a vertical swipe counts: the first clear movement decides the axis; horizontal / diagonal moves are ignored (no brightness, no volume, no pause-click) */
 st.addEventListener('pointermove',e=>{if(!g||g.hold)return;const dx=e.clientX-g.x,dy=g.y-e.clientY;
  if(!g.lock&&(Math.abs(dx)>8||Math.abs(dy)>8)){g.lock=Math.abs(dy)>Math.abs(dx)*1.5?'v':'h';clearTimeout(g.t)}
@@ -446,11 +527,12 @@ const tw=$('#tlw'),at=e=>{const r=tw.getBoundingClientRect();return Math.min(1,M
 tw.addEventListener('pointermove',e=>{const f=at(e),t=f*(v.duration||0);const p=$('#prev');p.style.display='block';p.style.left=Math.min(tw.clientWidth-90,Math.max(90,f*tw.clientWidth))+'px';$('#pt').textContent=fmt(t);if(window.prevHook)window.prevHook(t);else if(Date.now()-pt>80&&pv.readyState){pt=Date.now();pv.currentTime=t}if(e.buttons&1)v.currentTime=t});
 tw.addEventListener('pointerleave',()=>$('#prev').style.display='none');
 tw.addEventListener('pointerdown',e=>{tw.setPointerCapture(e.pointerId);v.currentTime=at(e)*(v.duration||0)});
+try{new ResizeObserver(()=>root.style.setProperty('--barh',$('#bar').offsetHeight+'px')).observe($('#bar'))}catch(e){}
 /* keyboard */
 function key(e){if(/INPUT|TEXTAREA/.test(e.target.tagName)&&e.target.type!='range'&&e.target.type!='checkbox')return;if(window.deskKey)return deskKey(e);const k=e.key;let h=1;
  if(k==' ')toggle();else if(k=='ArrowRight')seek(e.shiftKey?S.skipShift:S.skip);else if(k=='ArrowLeft')seek(-(e.shiftKey?S.skipShift:S.skip));
  else if(k=='ArrowUp')setV(v.volume+S.vstep/100);else if(k=='ArrowDown')setV(v.volume-S.vstep/100);
- else if(/^m$/i.test(k))mute();else if(/^y$/i.test(k))subToggle();else if(/^[xc]$/i.test(k)){v.playbackRate=Math.min(4,Math.max(.25,Math.round((v.playbackRate+(/^c$/i.test(k)?.1:-.1))*100)/100));hud(v.playbackRate+'x','speed')}else if(k=='['||k==']'){const L=[.5,.75,1,1.25,1.5,2,3],r=v.playbackRate,n=k==']'?L.find(x=>x>r+.001):[...L].reverse().find(x=>x<r-.001);if(n!==undefined)v.playbackRate=n;hud(v.playbackRate+'x','speed')}else if(/^z$/i.test(k)||k=='Backspace'){v.playbackRate=1;hud('1x','speed')}else if(/^f$/i.test(k))fs();else if(/^p$/i.test(k))popup();
+ else if(/^m$/i.test(k))mute();else if(/^y$/i.test(k))subToggle();else if(/^[xc]$/i.test(k)){v.playbackRate=Math.min(4,Math.max(.25,Math.round((v.playbackRate+(/^c$/i.test(k)?.1:-.1))*100)/100));hud(v.playbackRate+'x','speed')}else if(k=='['||k==']'){const L=[.5,.75,1,1.25,1.5,1.75,2,3],r=v.playbackRate,n=k==']'?L.find(x=>x>r+.001):[...L].reverse().find(x=>x<r-.001);if(n!==undefined)v.playbackRate=n;hud(v.playbackRate+'x','speed')}else if(/^z$/i.test(k)||k=='Backspace'){v.playbackRate=1;hud('1x','speed')}else if(/^f$/i.test(k))fs();else if(/^p$/i.test(k))popup();
  else if(/^t$/i.test(k))onTop();else if(/^b$/i.test(k))addBM();else if(/^s$/i.test(k)&&!e.ctrlKey)shot();else if(/^r$/i.test(k)&&!e.ctrlKey)rec();else h=0;if(h)e.preventDefault()}
 addEventListener('keydown',key);
 {const B_=document.body;
@@ -478,7 +560,9 @@ st.addEventListener('contextmenu',e=>{e.preventDefault();if(e.target.closest('#b
  dmn.style.left=Math.max(4,Math.min(e.clientX,innerWidth-dmn.offsetWidth-4))+'px';dmn.style.top=Math.max(4,Math.min(e.clientY,innerHeight-dmn.offsetHeight-4))+'px'});
 /* auto-hide controls */
 let it;const setIdle=on=>{st.classList.toggle('idle',on);document.body.classList.toggle('idle',on)};
-['pointerdown','dblclick','click'].forEach(ev=>$('#empty .eb').addEventListener(ev,e=>e.stopPropagation()));
+document.querySelectorAll('#empty .eb,#empty .drop,#empty .rec').forEach(n=>['pointerdown','dblclick','click'].forEach(ev=>n.addEventListener(ev,e=>e.stopPropagation())));
+{const em=$('#empty'),sync=()=>document.documentElement.classList.toggle('home',em.style.display!=='none');sync();new MutationObserver(sync).observe(em,{attributes:true,attributeFilter:['style']})}
+$('#eDrop').onclick=()=>window.openDlg&&openDlg();
 $('#eOpen').onclick=()=>window.openDlg&&openDlg();$('#eUrl').onclick=()=>window.urlDlg&&urlDlg();
 window.syncAH=()=>{document.body.classList.toggle('ah',!!S.autoHide);if(!S.autoHide&&!document.fullscreenElement)setIdle(false);window.subLayout&&subLayout()};
 const wake=()=>{setIdle(false);clearTimeout(it);it=setTimeout(()=>{if(!v.paused&&P.style.display!='block'&&(S.autoHide||document.fullscreenElement))setIdle(true)},S.hideMs||2500)};

@@ -13,11 +13,13 @@ window.hexA=hexA;
 
 /* ---------- settings defaults (merged into the S object of the main script) ---------- */
 const D={hideMs:2500,accent:'#2f7bff',theme:'system',history:true,onTop:false,awake:true,resume:true,autoNext:true,loop:'off',shuffle:false,
-  autoFit:false,lockAspect:false,shotDir:'',recDir:'',shotFmt:'png',defSpeed:1,gest:true,autoHide:false,clickAct:'none',dblAct:'play',spdStep:.1,holdOn:true,wheel:true,
+  autoFit:false,lockAspect:false,shotDir:'',recDir:'',shotFmt:'png',defSpeed:1,gest:false,autoHide:false,clickAct:'none',dblAct:'play',spdStep:.1,holdOn:true,wheel:true,
   aspect:'fit',con:1,sat:1,flip:false,maxVol:1,vol:1,remVol:true,loud:'medium',
   autoSub:true,sbo:0,sout:true,spos:5,sfont:'system-ui, sans-serif',sdelay:0,trOn:true,trLang:'bn',trHover:true,trSel:true,trPause:false,trDic:false,trLeft:'search',trRight:'pin',trEngine:'google',trUrl:'https://www.google.com/search?q={q}'};
 for(const k in D)if(S[k]===undefined)S[k]=D[k];
 /* m16: subtitle defaults (white text, black outline, no box, just above the bottom edge of the picture) */
+/* m17: swipe gestures are off by default (turn them on in Settings → Controls → Gestures); also switched off once for existing installs */
+if(!S.m17){S.gest=false;S.m17=1;save()}
 if(!S.m16){S.sbo=0;S.sc='#ffffff';S.sb='#000000';S.sout=true;S.spos=5;S.m16=1;save()}
 if(!S.m17){if((S.accent||'').toLowerCase()==='#ff8800')S.accent='#2f7bff';S.m17=1;save()} /* default accent now matches the logo theme */
 S.keys=S.keys||{};
@@ -60,6 +62,7 @@ document.head.appendChild(el('style',{textContent:`
 #dlg .rd{color:var(--fg3);font-size:12px;margin-top:2px;line-height:1.45;word-break:break-word}
 #dlg .rc2{display:flex;align-items:center;gap:10px;flex:none}
 #dlg .fx{color:var(--fg2);text-align:right}
+#dlg pre.doc{margin:0;padding:12px 14px;max-height:260px;overflow:auto;white-space:pre-wrap;word-break:break-word;font:12px/1.55 Consolas,"Segoe UI",monospace;color:var(--fg2);background:var(--bg2);border-bottom:1px solid var(--bd2);user-select:text}
 #dlg .note{display:flex;gap:10px;padding:10px 14px;color:var(--fg3);line-height:1.5;border-bottom:1px solid var(--bd2)}
 #dlg .note:last-child{border-bottom:0}#dlg .note .ic{width:16px;height:16px;margin-top:2px}
 #dlg .sw{position:relative;width:38px;height:22px;flex:none;display:block}
@@ -87,7 +90,7 @@ document.head.appendChild(el('style',{textContent:`
 #dlg .sws b{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;box-shadow:inset 0 0 0 1px rgba(0,0,0,.35)}
 #dlg .sws b.on{border-color:var(--fgh)}
 @media(max-width:720px){#dlg .dn{width:52px}#dlg .dn span{display:none}#dlg .dn button,#dlg .dn .nt{justify-content:center;padding-left:0;padding-right:0}#dlg .sr{width:150px}#dlg .row{flex-wrap:wrap}}
-.side{-webkit-app-region:no-drag;transition:top .18s;position:absolute;top:0;right:0;bottom:0;width:340px;background:var(--pnl);border-left:1px solid var(--bd);display:none;flex-direction:column;z-index:10;color:var(--fg);font-size:13px}
+.side{-webkit-app-region:no-drag;transition:top .18s,bottom .18s;position:absolute;top:0;right:0;bottom:0;width:340px;background:var(--pnl);border-left:1px solid var(--bd);display:none;flex-direction:column;z-index:10;color:var(--fg);font-size:13px}
 .side .ph{display:flex;gap:6px;padding:8px;border-bottom:1px solid var(--bd);align-items:center}
 .side .ph b{font-weight:600}.side .sp2{flex:1}
 .side .ph button{background:var(--bg2);color:var(--fg);border:1px solid var(--bd2);border-radius:3px;padding:3px 9px;cursor:pointer;font:inherit}
@@ -95,7 +98,7 @@ document.head.appendChild(el('style',{textContent:`
 .side .ph button.on{color:var(--ac);border-color:var(--ac)}
 .side .ph button{display:inline-flex;align-items:center;gap:6px}.side .ph .ic{width:15px;height:15px}.side .ph button.px{border:0;background:none;padding:4px 7px}
 .side .ph button.px:hover{background:#e81123;color:#fff}
-.side .pb{flex:1;overflow:auto;padding-bottom:84px}
+.side .pb{flex:1;overflow:auto;padding-bottom:8px}
 .side .pi{padding:6px 8px;cursor:pointer;display:flex;align-items:center;gap:8px}
 .side .pi .th{width:80px;height:45px;display:flex;align-items:center;justify-content:center;color:var(--fg3)}.side .pi .th .ic{width:22px;height:22px}
 .side .pi .in{flex:1;min-width:0}
@@ -220,7 +223,7 @@ function saveResume(){
 }
 
 /* ---------- opening files, playlist ---------- */
-function fail(msg){const e=$('#empty');e.style.display='flex';e.querySelector('.em').textContent=msg}
+function fail(msg){const e=$('#empty');e.style.display='flex';e.querySelector('.em').textContent=msg;setTimeout(renderHome,0)}
 const isWeb=p=>/^https?:\/\//i.test(p);
 const WEB=new Map(); // link -> {title,src}  (session only; yt-dlp links expire)
 const label=p=>isWeb(p)?((WEB.get(p)||{}).title||p):bn(p);
@@ -231,6 +234,7 @@ const HK='np_hist';
 let HC=[];try{HC=JSON.parse(localStorage.getItem(HK)||'[]')}catch(e){}
 function histSave(){
   HC=HC.slice(0,100);
+  setTimeout(renderHome,0);
   try{localStorage.setItem(HK,JSON.stringify(HC))}
   catch(e){HC.forEach(x=>delete x.img);try{localStorage.setItem(HK,JSON.stringify(HC))}catch(_){}}
 }
@@ -241,6 +245,17 @@ function histAdd(){
   HC.unshift({...(o||{}),k:cur,title:name,web:isWeb(cur),at:Date.now()});
   histSave();renderHist();
 }
+const HROW=new Map(); // history entry -> its row in the open panel
+const histSub=e=>{const pc=e.dur?Math.min(100,Math.round(e.pos/e.dur*100)):0;return{pc,txt:(e.web?'Online · ':'')+when(e.at)+(e.dur?' · '+fmt(e.pos||0)+' / '+fmt(e.dur)+' ('+pc+'%)':'')}};
+/* the open history panel follows the playing video live (also while dragging the timeline) */
+function histLive(){
+  const p=$('#hist');if(!p||p.style.display!=='flex'||!cur||!S.history)return;
+  const e=HC.find(x=>x.k===cur);if(!e||!isFinite(v.duration)||!v.duration)return;
+  e.pos=Math.floor(v.currentTime);e.dur=Math.floor(v.duration);
+  const r=HROW.get(e);if(!r)return;const h=histSub(e);
+  r.du.textContent=h.txt;if(r.pg)r.pg.firstChild.style.width=h.pc+'%';
+}
+['timeupdate','seeking','seeked','durationchange'].forEach(ev=>v.addEventListener(ev,histLive));
 function histTouch(){
   if(!S.history||!cur||!isFinite(v.duration)||!v.duration)return;
   const e=HC.find(x=>x.k===cur);if(!e)return;
@@ -254,6 +269,26 @@ function histTouch(){
   }
   histSave();
 }
+
+
+/* ---------- home screen: "Continue watching" (from the watch history) ---------- */
+function renderHome(){
+  const box=$('#eRec'),row=$('#eRow'),em=$('#empty');
+  if(!box||!row||!em||em.style.display==='none')return;
+  const list=(S.history?HC:[]).filter(e=>e&&e.k&&e.dur&&e.pos>10&&e.pos<e.dur-15).slice(0,4);
+  row.innerHTML='';
+  box.classList.toggle('on',list.length>0);
+  list.forEach(e=>{
+    const th=el('span',{className:'cth'},[el('s',{textContent:fmt(e.dur)}),el('i')]);
+    th.lastChild.style.width=Math.min(100,Math.round(e.pos/e.dur*100))+'%';
+    if(e.img)th.style.backgroundImage='url('+e.img+')';
+    const c=el('div',{className:'cd',title:e.k},[th,el('p',{},[el('b',{textContent:e.title||e.k}),el('small',{textContent:fmt(e.dur-e.pos)+' left'+(e.web?' - online':'')})])]);
+    c.onclick=()=>{pendingSeek=e.pos;openFiles([e.k])};
+    row.appendChild(c);
+  });
+}
+{const c=$('#eClr');if(c)c.onclick=()=>{if(HC.length&&confirm('Clear all watch history?')){HC=[];histSave();renderHome()}}}
+renderHome();
 
 let hlsI=null;
 const hlsLoad=()=>new Promise(res=>{if(window.Hls)return res(true);const s=document.createElement('script');s.src='../node_modules/hls.js/dist/hls.min.js';s.onload=()=>res(!!window.Hls);s.onerror=()=>res(false);document.head.appendChild(s)});
@@ -422,6 +457,9 @@ async function setupAV(p,sidecar,memK,hasSub,ref){ /* ref: the address ffmpeg re
   /* rows for the new subtitle menu (see subPanel in player.html) */
   window.subActive=()=>{if(curSub&&curSub.emb&&AVs&&AVs.subs[AVs.sIdx]){const s=AVs.subs[AVs.sIdx];return s.title||langName(s.lang)||'Subtitle '+(AVs.sIdx+1)}return(curSub&&curSub.label)||'Subtitle file'};
   window.subHasTracks=()=>!!(AVs&&AVs.subs.length);
+  /* signature of the tracks found so far (the open Audio / Subtitles panel redraws when it changes) */
+  window.panelSig=()=>JSON.stringify([AVs?[AVs.audio.length,AVs.aIdx,AVs.sIdx,AVs.subs.map(s=>(s.title||'')+(s.lang||'')+(s.text?1:0))]:null,v.audioTracks?v.audioTracks.length:0]);
+  window.audRebuild=()=>{P.style.display='none';bt.aud.onclick({stopPropagation(){}})};
   window.subTracks=(trk,has)=>{
     extList.forEach(e=>trk(e.label,e.info,subOn&&!!curSub&&!!curSub.ext&&extKey(curSub)===e.k,()=>loadSub(e.file,{ext:1,label:e.label,info:e.info})));
     if(AVs)AVs.subs.forEach((s,i)=>{
@@ -572,17 +610,18 @@ window.togglePL=togglePL;
 const when=t=>new Date(t).toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
 function renderHist(){
   const p=$('#hist');if(!p||p.style.display!=='flex')return;
-  const b=p.querySelector('.pb');b.innerHTML='';
+  const b=p.querySelector('.pb');b.innerHTML='';HROW.clear();
   p.querySelector('.pt').textContent='Watch history ('+HC.length+')';
   p.querySelector('.tg').textContent='History: '+(S.history?'ON':'OFF');p.querySelector('.tg').classList.toggle('on',!!S.history);
   if(!HC.length)b.appendChild(el('div',{className:'pe',textContent:S.history?'Nothing watched yet.':'History is turned off.'}));
   HC.forEach(e=>{
     const th=el('div',{className:'th'});
     if(e.img)th.style.backgroundImage='url('+e.img+')';else th.innerHTML=ico(e.web?'globe':'film');
-    const pc=e.dur?Math.min(100,Math.round(e.pos/e.dur*100)):0;
-    const sub=(e.web?'Online · ':'')+when(e.at)+(e.dur?' · '+fmt(e.pos||0)+' / '+fmt(e.dur)+' ('+pc+'%)':'');
+    const hs=histSub(e),pc=hs.pc,sub=hs.txt;
     const pg=el('div',{className:'pg'},[el('i')]);pg.firstChild.style.width=pc+'%';
-    const d=el('div',{className:'pi'+(e.k===cur?' on':''),title:e.k},[th,el('div',{className:'in'},[el('div',{className:'nm',textContent:e.title||e.k}),el('div',{className:'du',textContent:sub}),e.dur?pg:''])]);
+    const du=el('div',{className:'du',textContent:sub});
+    HROW.set(e,{du,pg:e.dur?pg:null});
+    const d=el('div',{className:'pi'+(e.k===cur?' on':''),title:e.k},[th,el('div',{className:'in'},[el('div',{className:'nm',textContent:e.title||e.k}),du,e.dur?pg:''])]);
     const x=el('span',{className:'rm',innerHTML:ico('close'),title:'Remove from history'});
     x.onclick=ev=>{ev.stopPropagation();HC=HC.filter(y=>y!==e);histSave();renderHist()};
     d.onclick=()=>{pendingSeek=(e.pos>10&&e.dur&&e.pos<e.dur-15)?e.pos:null;openFiles([e.k])};
@@ -660,7 +699,7 @@ window.deskAspectRows=(p,r)=>['fit','fill','stretch','16:9','4:3','21:9','1:1'].
 
 /* ---------- playback helpers ---------- */
 let lastRate=1;
-const SPD=[.5,.75,1,1.25,1.5,2,3]; /* same list as the Speed menu */
+const SPD=[.5,.75,1,1.25,1.5,1.75,2,3]; /* same list as the Speed menu */
 const preset=d=>{const r=v.playbackRate,e=.001,n=d>0?SPD.find(x=>x>r+e):[...SPD].reverse().find(x=>x<r-e);v.playbackRate=n===undefined?(d>0?SPD[SPD.length-1]:SPD[0]):n;hud(v.playbackRate+'x','speed')};
 const rate=d=>{v.playbackRate=Math.min(4,Math.max(.25,Math.round((v.playbackRate+d)*100)/100));hud(v.playbackRate+'x','speed')};
 let fd=1/30,lm=0;
@@ -1002,8 +1041,16 @@ const TABS={
     const legal=i=>{ // donate / downloads rows show only when their link is set in package.json ("nixplayer" block)
       if(i.donateUrl)ctl(cs,{t:'btn',l:'Support NixPlayer',d:'NixPlayer is free. A donation helps to keep it updated.',text:'Donate',ic:'link',run:()=>desk.openUrl(i.donateUrl)});
       if(i.homepage)ctl(cs,{t:'btn',l:'Downloads and release notes',text:'Open page',ic:'url',run:()=>desk.openUrl(i.homepage)});
-      ctl(cs,{t:'btn',l:'License',d:'Copyright © Nasimul Islam Nasim. Free to use.',text:'Open',ic:'info',run:()=>desk.openDoc('license')});
-      ctl(cs,{t:'btn',l:'Third-party notices',d:'Electron, ffmpeg, hls.js, Lucide icons and others.',text:'Open',ic:'info',run:()=>desk.openDoc('notices')});
+      /* license / notices open right here in the page (no external file): the button shows / hides the text under its row */
+      const doc=(l,d,n)=>{let pre=null;const b=ctl(cs,{t:'btn',l,d,text:'Show',ic:'info',run:async()=>{
+        const row=b.closest('.row');
+        if(pre){pre.remove();pre=null;b.lastChild.textContent='Show';return}
+        pre=el('pre',{className:'doc',textContent:'Loading…'});row.after(pre);b.lastChild.textContent='Hide';
+        let t='';try{t=await desk.docText(n)}catch(_){}
+        pre.textContent=t||'The file could not be read.';
+      }})};
+      doc('License','Copyright © Nasimul Islam Nasim. Free to use.','license');
+      doc('Third-party notices','Electron, ffmpeg, hls.js, Lucide icons and others.','notices');
     };
     desk.appInfo().then(legal).catch(()=>legal({}));
     c=sec(box,'Maintenance','reset');
@@ -1047,6 +1094,10 @@ st.addEventListener('wheel',e=>{
   deskVol(LV+(e.deltaY<0?1:-1)*S.vstep/100);
 },{passive:true});
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(b)b.blur()},true);
+/* mouse wheel over the Speed / Brightness buttons: scroll up = more, scroll down = less */
+bt.spd.addEventListener('wheel',e=>{e.preventDefault();e.stopPropagation();preset(e.deltaY<0?1:-1)},{passive:false});
+bt.bri.addEventListener('wheel',e=>{e.preventDefault();e.stopPropagation();setB(bright+(e.deltaY<0?1:-1)*.05)},{passive:false});
+bt.spd.title='Speed (scroll the mouse wheel here to change)';bt.bri.title='Brightness (scroll the mouse wheel here to change)';
 
 v.addEventListener('loadedmetadata',()=>{
   applyAspect();applyFx();
@@ -1076,6 +1127,25 @@ v.addEventListener('ended',()=>{saveResume();if(S.loop==='one')return;if(S.autoN
 setInterval(()=>{if(!v.paused)saveResume()},5000);
 addEventListener('beforeunload',saveResume);
 
+/* double click on the title bar while in fullscreen: leave fullscreen and return to the last window size */
+$('#top').addEventListener('dblclick',e=>{
+  if(!document.fullscreenElement||e.target.closest('button,#dmenu'))return;
+  e.preventDefault();desk.leaveFull();document.exitFullscreen().catch(()=>{});
+});
+/* the control bar never wraps: tell the window how wide it must be at least so every visible button stays on one row */
+{
+  const bw=$('#btns'),bar=$('#bar');bt.spd.style.minWidth='46px';/* fits "0.75x" so the row does not change width with the speed */
+  let ft=0;const fitMin=()=>{
+    const k=[...bw.children].filter(x=>!x.classList.contains('sp')&&getComputedStyle(x).display!=='none');
+    let w=0;k.forEach(x=>{const c=getComputedStyle(x);w+=x.offsetWidth+parseFloat(c.marginLeft)+parseFloat(c.marginRight)});
+    const b=getComputedStyle(bar),g=parseFloat(getComputedStyle(bw).columnGap)||2;
+    w+=g*Math.max(0,k.length-1)+parseFloat(b.paddingLeft)+parseFloat(b.paddingRight)+2;
+    desk.setMinWidth(Math.ceil(w));
+  };
+  window.fitMin=()=>{clearTimeout(ft);ft=setTimeout(fitMin,60)};
+  new MutationObserver(window.fitMin).observe(bw,{attributes:true,attributeFilter:['style'],subtree:true});
+  window.fitMin();setTimeout(fitMin,600);document.fonts&&document.fonts.ready.then(window.fitMin);
+}
 /* top bar window buttons */
 tb.min.onclick=e=>{e.stopPropagation();desk.minimize()};
 tb.max.onclick=e=>{e.stopPropagation();desk.toggleMax()};
@@ -1101,6 +1171,9 @@ deskVol(S.remVol?S.vol:1,true);
 desk.onTop(!!S.onTop).then(r=>bt.top.classList.toggle('on',r));
 desk.onOpen(openFiles);
 /* taskbar thumbnail buttons: previous / play-pause / next */
-{const ts=()=>desk.thumbState(v.paused);['play','pause','loadedmetadata','emptied'].forEach(e=>v.addEventListener(e,ts));ts();
+{const ts=()=>desk.thumbState(v.paused,!!v.currentSrc);['play','pause','loadedmetadata','emptied','ended'].forEach(e=>v.addEventListener(e,ts));ts();
+ /* progress along the taskbar button, updated at most twice a second */
+ let lp=0;v.addEventListener('timeupdate',()=>{const n=Date.now();if(n-lp<500)return;lp=n;desk.thumbProgress(v.duration>0&&isFinite(v.duration)?v.currentTime/v.duration:-1)});
+ v.addEventListener('emptied',()=>desk.thumbProgress(-1));
  desk.onThumb(c=>c=='play'?toggle():c=='next'?step(1):deskPrev())}
 })();

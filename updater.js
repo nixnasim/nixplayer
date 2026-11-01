@@ -84,10 +84,15 @@ ipcMain.handle('app:info',()=>({
 }));
 ipcMain.handle('upd:check',()=>check(true));
 const DOCS={license:'LICENSE.txt',notices:'THIRD-PARTY-NOTICES.md'};
+const docPath=f=>app.isPackaged?path.join(process.resourcesPath,f):path.join(__dirname,f==='LICENSE.txt'?'LICENSE':f);
 ipcMain.handle('app:doc',async(e,name)=>{
   const f=DOCS[name];if(!f)return false;
-  const p=app.isPackaged?path.join(process.resourcesPath,f):path.join(__dirname,f==='LICENSE.txt'?'LICENSE':f);
-  return (await shell.openPath(p))===''; // openPath returns '' on success
+  return (await shell.openPath(docPath(f)))===''; // openPath returns '' on success
+});
+// the text of the license / notices, shown inside Settings -> About (no external file opens)
+ipcMain.handle('app:docText',async(e,name)=>{
+  const f=DOCS[name];if(!f)return '';
+  try{return await require('fs').promises.readFile(docPath(f),'utf8')}catch(_){return ''}
 });
 ipcMain.handle('app:open',(e,url)=>{
   try{const u=new URL(url);if(u.protocol==='https:'){shell.openExternal(u.href);return true}}catch(_){}
