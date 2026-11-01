@@ -8,12 +8,16 @@
 
 !define NP_ID "NixPlayer"
 
-Var npChkDefault
-Var npChkDesktop
-Var npChkStart
-Var npSetDefault
-Var npDesktop
-Var npStart
+; makensis runs twice (a first pass builds the uninstaller). The installer-only variables must not exist in that
+; pass, otherwise NSIS warns "Variable ... not referenced" and electron-builder treats the warning as an error.
+!ifndef BUILD_UNINSTALLER
+  Var npChkDefault
+  Var npChkDesktop
+  Var npChkStart
+  Var npSetDefault
+  Var npDesktop
+  Var npStart
+!endif
 
 ; every option is ticked by default; the user can untick any of them
 !macro customInit
