@@ -8,7 +8,6 @@
 
 !define NP_ID "NixPlayer"
 
-Var npDlg
 Var npChkDefault
 Var npChkDesktop
 Var npChkStart
@@ -41,8 +40,8 @@ Var npStart
     ${EndIf}
     !insertmacro MUI_HEADER_TEXT "Choose Options" "Choose how NixPlayer should integrate with Windows."
     nsDialogs::Create 1018
-    Pop $npDlg
-    ${If} $npDlg == error
+    Pop $0
+    ${If} $0 == error
       Abort
     ${EndIf}
     ${NSD_CreateCheckbox} 0 6u 100% 12u "Set NixPlayer as the default player for video and audio files"
