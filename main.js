@@ -23,7 +23,9 @@ const PRIV={standard:true,secure:true,supportFetchAPI:true,stream:true,corsEnabl
 // online videos go through a local streaming proxy (webproxy.js)
 protocol.registerSchemesAsPrivileged([{scheme:'media',privileges:PRIV}]);
 
-let win=null,blocker=null;
+let win=null; // the window used last (focused): target of the auto-update progress
+const blockers=new Map(); // power-save blocker per window (webContents id)
+const wOf=e=>{const w=BrowserWindow.fromWebContents(e.sender);return w&&!w.isDestroyed()?w:null}; // the window an IPC call came from
 const stateFile=()=>path.join(app.getPath('userData'),'window.json');
 const readState=()=>{try{return JSON.parse(fs.readFileSync(stateFile(),'utf8'))}catch(e){return{}}};
 // links: plain http(s) URLs, or nixplayer://open?url=<encoded link> (e.g. from a browser bookmarklet)
@@ -39,32 +41,39 @@ const pickArgs=argv=>argv.slice(1).map(a=>toWeb(a)||a)
   .filter(a=>/^https?:\/\//i.test(a)||(!a.startsWith('-')&&(MEDIA.test(a)||SUBS.test(a))&&fs.existsSync(a)))
   .map(a=>/^https?:\/\//i.test(a)?a:path.resolve(a));
 
-function sendFiles(files){if(win&&files.length)win.webContents.send('open-files',files)}
+function sendFiles(w,files){if(w&&!w.isDestroyed()&&files.length)w.webContents.send('open-files',files)}
 
-function createWindow(){
+function createWindow(files){
   const s=readState();
+  const others=BrowserWindow.getAllWindows().filter(w=>!w.isDestroyed());
   const opts={width:s.width||1000,height:s.height||600,minWidth:420,minHeight:260,backgroundColor:'#000000',icon:path.join(__dirname,'renderer','logo.png'),autoHideMenuBar:true,frame:false,title:'NixPlayer',
     webPreferences:{preload:path.join(__dirname,'preload.js'),contextIsolation:true,nodeIntegration:false,backgroundThrottling:false}};
   if(Number.isFinite(s.x)&&Number.isFinite(s.y)){
     const ok=screen.getAllDisplays().some(d=>{const b=d.bounds;return s.x>=b.x-50&&s.x<b.x+b.width-100&&s.y>=b.y-10&&s.y<b.y+b.height-100});
     if(ok){opts.x=s.x;opts.y=s.y}
   }
-  win=new BrowserWindow(opts);
-  win.removeMenu();
-  win.loadFile(path.join(__dirname,'renderer','player.html'));
-  if(s.max)win.maximize();
-  win.on('close',()=>{try{fs.writeFileSync(stateFile(),JSON.stringify({...win.getNormalBounds(),max:win.isMaximized()}))}catch(e){}});
-  const sendState=()=>{if(win&&!win.isDestroyed())win.webContents.send('win:changed',{max:win.isMaximized(),top:win.isAlwaysOnTop(),full:win.isFullScreen()})};
-  ['maximize','unmaximize','restore','enter-full-screen','leave-full-screen'].forEach(ev=>win.on(ev,sendState));
-  win.on('closed',()=>{win=null;if(blocker!==null){powerSaveBlocker.stop(blocker);blocker=null}});
-  win.webContents.on('did-finish-load',()=>sendFiles(pickArgs(process.argv)));
-  win.webContents.setWindowOpenHandler(({url})=>{if(/^https?:/i.test(url))shell.openExternal(url);return{action:'deny'}});
-  if(process.env.NP_DEBUG)win.webContents.on('console-message',(e,...r)=>console.log('[renderer]',e.message??r[1],'@',e.sourceId??r[3],e.lineNumber??r[2]));
+  // an extra window opens a little down / right of the last one so it does not hide it
+  if(others.length){const b=(others.find(w=>w.isFocused())||others[others.length-1]).getNormalBounds();opts.x=b.x+36;opts.y=b.y+36;opts.width=b.width;opts.height=b.height}
+  const w=new BrowserWindow(opts);win=w;
+  w.removeMenu();
+  w.loadFile(path.join(__dirname,'renderer','player.html'));
+  if(s.max&&!others.length)w.maximize();
+  w.on('focus',()=>{win=w});
+  w.on('close',()=>{try{fs.writeFileSync(stateFile(),JSON.stringify({...w.getNormalBounds(),max:w.isMaximized()}))}catch(e){}});
+  const sendState=()=>{if(!w.isDestroyed())w.webContents.send('win:changed',{max:w.isMaximized(),top:w.isAlwaysOnTop(),full:w.isFullScreen()})};
+  ['maximize','unmaximize','restore','enter-full-screen','leave-full-screen'].forEach(ev=>w.on(ev,sendState));
+  const wid=w.webContents.id;
+  w.on('closed',()=>{if(win===w)win=BrowserWindow.getAllWindows().find(x=>!x.isDestroyed())||null;const b=blockers.get(wid);if(b!==undefined){powerSaveBlocker.stop(b);blockers.delete(wid)}});
+  w.webContents.on('did-finish-load',()=>sendFiles(w,files||[]));
+  w.webContents.setWindowOpenHandler(({url})=>{if(/^https?:/i.test(url))shell.openExternal(url);return{action:'deny'}});
+  if(process.env.NP_DEBUG)w.webContents.on('console-message',(e,...r)=>console.log('[renderer]',e.message??r[1],'@',e.sourceId??r[3],e.lineNumber??r[2]));
+  return w;
 }
 
 if(!app.requestSingleInstanceLock()){app.quit()}
 else{
-  app.on('second-instance',(e,argv)=>{if(!win)return;if(win.isMinimized())win.restore();win.focus();sendFiles(pickArgs(argv))});
+  // opened from outside (Explorer, "Open with", a link, the app icon again): always a NEW window; opening things from inside a player window stays in that window
+  app.on('second-instance',(e,argv)=>{createWindow(pickArgs(argv)).focus()});
   app.whenReady().then(()=>{
     protocol.handle('media',async req=>{
       try{
@@ -109,9 +118,9 @@ else{
       }
       cb({requestHeaders:h});
     });
-    createWindow();
+    createWindow(pickArgs(process.argv));
     require('./updater.js').init(()=>win); // auto-update (installed app only) + About-page helpers
-    app.on('activate',()=>{if(!BrowserWindow.getAllWindows().length)createWindow()});
+    app.on('activate',()=>{if(!BrowserWindow.getAllWindows().length)createWindow([])});
   });
 }
 app.on('window-all-closed',()=>app.quit());
@@ -220,7 +229,7 @@ ipcMain.handle('net:resolve',async(e,url)=>{
 const okMedia=p=>typeof p==='string'&&(WP.isProxy(p)||(MEDIA.test(p)&&fs.existsSync(p)));
 ipcMain.handle('av:probe',(e,p)=>okMedia(p)?AV.probe(p):{ok:false});
 ipcMain.handle('av:sub',(e,p,i)=>okMedia(p)?AV.extractSub(p,i|0):null);
-ipcMain.handle('av:subLive',(e,p,i,ss)=>okMedia(p)?AV.subLive(p,i|0,+ss||0,m=>{if(win&&!win.isDestroyed())win.webContents.send('sub:chunk',m)}):0);
+ipcMain.handle('av:subLive',(e,p,i,ss)=>okMedia(p)?AV.subLive(p,i|0,+ss||0,m=>{if(!e.sender.isDestroyed())e.sender.send('sub:chunk',m)}):0);
 ipcMain.handle('av:subStop',(e,id)=>AV.subStop(id));
 ipcMain.handle('av:thumb',(e,p,t)=>okMedia(p)&&WP.isProxy(p)?AV.thumb(p,+t||0):null);
 ipcMain.handle('av:audio',(e,p,i,ss)=>okMedia(p)?AV.audioUrl(p,i|0,ss):null);
@@ -391,7 +400,7 @@ ipcMain.handle('dict:go',async(e,w,sl)=>{
 const safeName=n=>String(n||'subtitle.srt').replace(/[\\/:*?"<>|\x00-\x1f]+/g,'_').slice(0,150);
 ipcMain.handle('subs:save',async(e,text,o)=>{
   o=o||{};const def=path.join(o.dir?path.dirname(o.dir):app.getPath('documents'),safeName(o.name));
-  const r=await dialog.showSaveDialog(win,{defaultPath:def,filters:[{name:'Subtitles',extensions:['srt']}]});
+  const r=await dialog.showSaveDialog(wOf(e),{defaultPath:def,filters:[{name:'Subtitles',extensions:['srt']}]});
   if(r.canceled||!r.filePath)return null;
   try{fs.writeFileSync(r.filePath,String(text),'utf8');return r.filePath}catch(_){return null}
 });
@@ -406,9 +415,9 @@ ipcMain.handle('subs:write',(e,text,o)=>{
 
 /* ---------- IPC ---------- */
 const mediaFilters=[{name:'Media',extensions:EXT},{name:'Subtitles',extensions:['srt','vtt']},{name:'All files',extensions:['*']}];
-ipcMain.handle('dlg:files',async()=>{const r=await dialog.showOpenDialog(win,{properties:['openFile','multiSelections'],filters:mediaFilters});return r.canceled?[]:r.filePaths});
-ipcMain.handle('dlg:sub',async()=>{const r=await dialog.showOpenDialog(win,{properties:['openFile'],filters:[{name:'Subtitles',extensions:['srt','vtt']}]});return r.canceled?null:r.filePaths[0]});
-ipcMain.handle('dlg:folder',async()=>{const r=await dialog.showOpenDialog(win,{properties:['openDirectory','createDirectory']});return r.canceled?null:r.filePaths[0]});
+ipcMain.handle('dlg:files',async e=>{const r=await dialog.showOpenDialog(wOf(e),{properties:['openFile','multiSelections'],filters:mediaFilters});return r.canceled?[]:r.filePaths});
+ipcMain.handle('dlg:sub',async e=>{const r=await dialog.showOpenDialog(wOf(e),{properties:['openFile'],filters:[{name:'Subtitles',extensions:['srt','vtt']}]});return r.canceled?null:r.filePaths[0]});
+ipcMain.handle('dlg:folder',async e=>{const r=await dialog.showOpenDialog(wOf(e),{properties:['openDirectory','createDirectory']});return r.canceled?null:r.filePaths[0]});
 
 ipcMain.handle('fs:text',(e,p)=>{
   try{
@@ -449,10 +458,10 @@ ipcMain.handle('rec:save',(e,buf,dir,name)=>{
 });
 ipcMain.handle('shell:reveal',(e,p)=>shell.showItemInFolder(p));
 
-ipcMain.handle('win:top',(e,on)=>{if(!win)return false;win.setAlwaysOnTop(!!on,'floating');return win.isAlwaysOnTop()});
+ipcMain.handle('win:top',(e,on)=>{const win=wOf(e);if(!win)return false;win.setAlwaysOnTop(!!on,'floating');return win.isAlwaysOnTop()});
 ipcMain.handle('win:size',(e,w,h,xh)=>{
   xh=Math.max(0,+xh||0);
-  if(!win)return;
+  const win=wOf(e);if(!win)return;
   if(win.isFullScreen())win.setFullScreen(false);
   if(win.isMaximized())win.unmaximize();
   const wa=screen.getDisplayMatching(win.getBounds()).workArea;
@@ -460,25 +469,49 @@ ipcMain.handle('win:size',(e,w,h,xh)=>{
   win.setContentSize(Math.round(w*k),Math.round(h*k)+TOPH+xh);
   win.center();
 });
-ipcMain.handle('win:aspect',(e,r,xh)=>{if(win)win.setAspectRatio(r||0,{width:0,height:TOPH+Math.max(0,+xh||0)})});
+// leave fullscreen and go back to the window size / place it had before (double click on the title bar)
+ipcMain.handle('win:leaveFull',e=>{const win=wOf(e);if(win&&win.isFullScreen())win.setFullScreen(false)});
+// the control bar needs this much width to keep all its buttons on one row (measured in the page)
+ipcMain.handle('win:minw',(e,w)=>{
+  const win=wOf(e);if(!win||!Number.isFinite(+w))return;
+  const wa=screen.getDisplayMatching(win.getBounds()).workArea;
+  win.setMinimumSize(Math.round(Math.min(Math.max(420,+w),wa.width)),260);
+});
+ipcMain.handle('win:aspect',(e,r,xh)=>{const win=wOf(e);if(win)win.setAspectRatio(r||0,{width:0,height:TOPH+Math.max(0,+xh||0)})});
 // taskbar thumbnail (hover the taskbar icon): previous / play-pause / next
 const {nativeImage}=require('electron');
 const tbIcon=n=>nativeImage.createFromPath(path.join(__dirname,'renderer','tb',n+'.png'));
-function setThumb(paused){
+function setThumb(win,paused){
   if(!win||win.isDestroyed()||process.platform!=='win32')return;
-  const send=c=>()=>{if(win&&!win.isDestroyed())win.webContents.send('thumb:cmd',c)};
+  const send=c=>()=>{if(!win.isDestroyed())win.webContents.send('thumb:cmd',c)};
   try{win.setThumbarButtons([
     {tooltip:'Previous',icon:tbIcon('prev'),click:send('prev')},
     {tooltip:paused?'Play':'Pause',icon:tbIcon(paused?'play':'pause'),click:send('play')},
     {tooltip:'Next',icon:tbIcon('next'),click:send('next')}
   ])}catch(_){}
 }
-ipcMain.handle('thumb:state',(e,paused)=>setThumb(!!paused));
-ipcMain.handle('win:min',()=>{if(win)win.minimize()});
-ipcMain.handle('win:max',()=>{if(!win)return;if(win.isFullScreen())win.setFullScreen(false);win.isMaximized()?win.unmaximize():win.maximize()});
-ipcMain.handle('win:close',()=>{if(win)win.close()});
-ipcMain.handle('win:state',()=>win?{max:win.isMaximized(),top:win.isAlwaysOnTop(),full:win.isFullScreen()}:{max:false,top:false,full:false});
+// small play / pause badge on the taskbar icon + playback progress along the taskbar button (like PotPlayer)
+const ovIcon=n=>nativeImage.createFromPath(path.join(__dirname,'renderer','tb',n+'.png'));
+function setOverlay(win,paused,has){
+  if(!win||win.isDestroyed()||process.platform!=='win32')return;
+  try{
+    if(!has){win.setOverlayIcon(null,'');win.setProgressBar(-1);return}
+    win.setOverlayIcon(ovIcon(paused?'ov-play':'ov-pause'),paused?'Paused':'Playing');
+  }catch(_){}
+}
+ipcMain.handle('thumb:state',(e,paused,has)=>{const w=wOf(e);setThumb(w,!!paused);setOverlay(w,!!paused,has!==false)});
+ipcMain.handle('thumb:progress',(e,f)=>{
+  const win=wOf(e);if(!win||win.isDestroyed()||process.platform!=='win32')return;
+  const p=Number.isFinite(f)?Math.max(0,Math.min(1,f)):-1;
+  win.__prog=p;
+  try{win.setProgressBar(p,{mode:'normal'})}catch(_){}
+});
+ipcMain.handle('win:min',e=>{const win=wOf(e);if(win)win.minimize()});
+ipcMain.handle('win:max',e=>{const win=wOf(e);if(!win)return;if(win.isFullScreen())win.setFullScreen(false);win.isMaximized()?win.unmaximize():win.maximize()});
+ipcMain.handle('win:close',e=>{const win=wOf(e);if(win)win.close()});
+ipcMain.handle('win:state',e=>{const win=wOf(e);return win?{max:win.isMaximized(),top:win.isAlwaysOnTop(),full:win.isFullScreen()}:{max:false,top:false,full:false}});
 ipcMain.handle('power',(e,on)=>{
-  if(on&&blocker===null)blocker=powerSaveBlocker.start('prevent-display-sleep');
-  if(!on&&blocker!==null){powerSaveBlocker.stop(blocker);blocker=null}
+  const id=e.sender.id,b=blockers.get(id);
+  if(on&&b===undefined)blockers.set(id,powerSaveBlocker.start('prevent-display-sleep'));
+  if(!on&&b!==undefined){powerSaveBlocker.stop(b);blockers.delete(id)}
 });
