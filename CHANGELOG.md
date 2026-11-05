@@ -5,7 +5,21 @@ Older notes (1.0 to 1.5.5) are in the "Recent changes" part of `README.md`.
 
 ## [Unreleased]
 
+## [1.7.1] - 2026-11-05
+
+### Added
+- **Glass theme.** Settings, Appearance, Theme now has a fourth choice, "Glass" (also in the NixPlayer menu, Theme). Layout, buttons, top bar and home screen stay exactly the same; they simply become see-through. On Windows 11 the whole window turns into real acrylic glass (the desktop shows through, blurred); on other systems NixPlayer paints its own soft glass backdrop instead. Menus, panels and tooltips are frosted, fullscreen stays black.
+- Next / Previous frame (`.` / `,`) now shows a message on the screen: the new time (hh:mm:ss.mmm), the frame number and the frame rate.
+- Click the NixPlayer logo (top left) to go back to the home screen (the current video stops, its position is saved).
+- Glass theme: no light edge line above / below the bars while a video is open (the home screen keeps it).
+- **Glass tint** slider (Settings, Appearance): how frosted the bars and panels are.
+- Bookmarks are shown on the timeline as small markers; click one to jump to it.
+- Subtitle position can now go lower than the picture (into the black bar), but never out of the window.
+- The Subtitles and Audio track panels open on the left side.
+- Clicking the picture closes the Playlist / Watch history panel.
+
 ### Changed
+- Shortcuts: Watch history is now just `H`; Subtitle delay − is `D` and Subtitle delay + is `F` (they were G / H). Reset all shortcuts in Settings to pick up the new keys if you changed them before.
 - Files opened from outside the player (Explorer, "Open with", a link, starting NixPlayer again) now open in a NEW window; everything done inside a player window (Open file / link, playlist, history, drag and drop) stays in that window. Each window has its own taskbar thumbnail buttons and sleep blocker.
 - Playlist / Watch history in fullscreen: the bottom control bar now behaves like the top bar (the panel shortens above it, no extra empty space at the end of the list).
 - Swipe up / down gestures are now off by default; turn them on in Settings, Controls, Gestures.
@@ -15,12 +29,6 @@ Older notes (1.0 to 1.5.5) are in the "Recent changes" part of `README.md`.
 - A movie name that is too long for the title bar scrolls (marquee) instead of being cut.
 - Mouse wheel over the Speed button steps through the Speed menu values (now with 1.75x); over Brightness it changes by 5%.
 - Bookmark markers no longer peek out at the screen edge while the control bar is hidden in fullscreen.
-
-### Added
-- Bookmarks are shown on the timeline as small markers; click one to jump to it.
-- Subtitle position can now go lower than the picture (into the black bar), but never out of the window.
-- The Subtitles and Audio track panels open on the left side.
-- Clicking the picture closes the Playlist / Watch history panel.
 
 ### Fixed
 - Fullscreen / auto-hide: the Playlist and Watch history panels no longer slide under the bottom bar.
@@ -33,8 +41,6 @@ Older notes (1.0 to 1.5.5) are in the "Recent changes" part of `README.md`.
 - Taskbar icon now shows a small play / pause badge and the playback progress along the taskbar button.
 - Logo, `.exe` icon and video/audio file icon are now transparent (no dark square), so the small logo badge on video thumbnails looks clean.
 - Settings → Audio → **Loudness boost** (Off / Light / Medium / Strong, default Medium): lifts quiet sound and dialogue by about 3 / 6 / 9 dB while loud scenes stay about the same, and a peak limiter prevents distortion. Measured in Chromium with test signals.
-
-### Fixed
 - The video no longer pauses when the window is minimized or covered by another window. Chromium could pause a hidden video (mostly files whose own sound is replaced by the external audio stream, or muted video). Pauses by the user (keys, click, taskbar buttons, media keys) are never undone.
 
 ## [1.6.0] - 2026-10-31

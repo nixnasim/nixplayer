@@ -94,6 +94,9 @@ body.full .side{border-bottom:0}
 .full #bar{transform:translateY(calc(100% + 28px));transition:transform .18s,opacity .25s}
 .full #top{-webkit-app-region:no-drag}.full.showtop .side{top:32px}/* no drag area in fullscreen, so a double click on the title bar reaches the page (leaves fullscreen, see desktop.js) */
 .full.showbar #bar{transform:none}
+/* fullscreen: while the top bar is showing, on-screen messages (volume, saved, muted, recording) slide down below it */
+.full #hud,.full #mb,.full #rec{transition:top .18s,opacity .18s,transform .18s}
+.full.showtop #hud{top:46px}.full.showtop #mb{top:94px}.full.showtop #rec{top:44px}
 #sk{display:flex;align-items:center;gap:10px}
 .tt{font-size:12px;color:var(--fg2);min-width:42px;font-variant-numeric:tabular-nums}#t2{text-align:right}
 #tlw{flex:1;position:relative;height:16px;display:flex;align-items:center;cursor:pointer}
@@ -168,7 +171,7 @@ body.full .side{border-bottom:0}
 #pop .bx{background:none;border:0;color:var(--fg3);cursor:pointer;padding:4px;border-radius:4px;display:flex}#pop .bx:hover{background:var(--bg3);color:var(--fgh)}#pop .bx .ic{width:16px;height:16px}
 
 /* top bar */
-#top{height:32px;flex:none;display:flex;align-items:center;background:var(--bgt);border-bottom:1px solid var(--bd);-webkit-app-region:drag;user-select:none;position:relative;z-index:30}
+#top{height:32px;flex:none;display:flex;align-items:center;background:var(--bgt);border-bottom:1px solid var(--bd);-webkit-app-region:no-drag;user-select:none;position:relative;z-index:30}/* not a native drag region (those swallow the mouse wheel): dragging is done in desktop.js */
 #top button{-webkit-app-region:no-drag;background:none;border:0;color:var(--fg2);cursor:pointer;font:inherit}
 #tlogo{display:flex;align-items:center;gap:4px;padding-left:10px;position:relative}
 #tmenu{font-size:13px;font-weight:600;padding:5px 8px;border-radius:3px;display:flex;align-items:center;gap:4px}#tmenu .ic{width:14px;height:14px;color:var(--fg3)}
@@ -203,6 +206,54 @@ body.full .side{border-bottom:0}
 :root[data-theme=light]{color-scheme:light;--bg0:#e9e9e9;--bg1:#f1f1f1;--bg2:#e2e2e2;--bg3:#d4d4d4;--bgt:#f8f8f8;--bd:#cfcfcf;--bd2:#b8b8b8;--trk:#c6c6c6;--inp:#fff;--fg:#1d1d1d;--fg2:#444;--fg3:#777;--fgh:#000;--pnl:rgba(241,241,241,.97)}
 .tt{cursor:pointer}.tt:hover{color:var(--fgh)}
 #prev{color:var(--fg)}
+/* ---------- Glass theme (Settings → Appearance → Theme → Glass): the dark theme made see-through ---------- */
+:root.glass{color-scheme:dark;--ga:.28;
+ --bg0:transparent;--bg1:rgba(24,26,58,.64);--bg2:rgba(255,255,255,.10);--bg3:rgba(255,255,255,.18);--bgt:transparent;
+ --bd:rgba(255,255,255,.22);--bd2:rgba(255,255,255,.32);--trk:rgba(255,255,255,.28);--inp:rgba(0,0,0,.28);
+ --fg:#fff;--fg2:rgba(255,255,255,.88);--fg3:rgba(255,255,255,.64);--fgh:#fff;--pnl:rgba(24,26,58,.72);
+ --hbg:transparent;--hbg2:transparent;--hglow1:rgba(255,255,255,.10);--hglow2:rgba(255,255,255,.04);
+ --hfg:#fff;--hfg2:rgba(255,255,255,.86);--hfg3:rgba(255,255,255,.68);--hcard:rgba(255,255,255,.14);--hcardb:rgba(255,255,255,.42);
+ --hghost:rgba(255,255,255,.16);--hghostt:#fff;--hkbd:rgba(255,255,255,.16);--hkbdb:rgba(255,255,255,.34);
+ --hshadow:0 12px 40px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.4);--htitle:linear-gradient(90deg,#fff,#d9f4ff 50%,#e4dcff);
+ --htile:linear-gradient(135deg,rgba(255,255,255,.40),rgba(255,255,255,.14))}
+/* own glass backdrop where the window cannot be acrylic (Windows 10, Linux, macOS): a soft aurora behind everything */
+:root.glass:not(.gnative),:root.glass:not(.gnative) body{background:
+ radial-gradient(ellipse 60% 55% at 12% 8%,rgba(31,182,212,.55),transparent 70%),
+ radial-gradient(ellipse 60% 60% at 92% 12%,rgba(122,76,255,.55),transparent 70%),
+ radial-gradient(ellipse 55% 50% at 50% 105%,rgba(255,95,162,.45),transparent 70%),#0b0d2a!important}
+:root.glass.gnative,:root.glass.gnative body{background:transparent!important}
+:root.glass #stage{background:transparent}
+:root.glass body.full,:root.glass body.full #stage{background:#000!important}
+:root.glass #empty{background:transparent}
+:root.glass #empty::before{background:radial-gradient(circle,var(--hglow1),var(--hglow2) 45%,transparent 70%)}
+/* bars */
+:root.glass #top,:root.glass #bar,:root.glass.home #top,:root.glass.home #bar{
+ --bgx:transparent;--bdx:rgba(255,255,255,.28);--fg:#fff;--fg2:rgba(255,255,255,.88);--fg3:rgba(255,255,255,.64);--fgh:#fff;--trk:rgba(255,255,255,.28);--bg3:rgba(255,255,255,.18);--bd2:rgba(255,255,255,.32);
+ background:linear-gradient(180deg,rgba(255,255,255,calc(var(--ga)*.85)),rgba(255,255,255,calc(var(--ga)*.35)))!important;
+ -webkit-backdrop-filter:blur(26px) saturate(170%);backdrop-filter:blur(26px) saturate(170%);
+ border-color:rgba(255,255,255,.28)!important;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.28)}
+:root.glass #top{box-shadow:inset 0 -1px 0 rgba(255,255,255,.22)}
+:root.glass #bar{box-shadow:inset 0 1px 0 rgba(255,255,255,.38)}
+:root.glass.home #top::after,:root.glass.home #bar::before{opacity:.35}
+/* while a video is open there is no edge line between the glass bars and the picture (the home screen keeps it) */
+:root.glass:not(.home) #top{border-bottom-color:transparent!important;box-shadow:none}
+:root.glass:not(.home) #bar{border-top-color:transparent!important;box-shadow:none}
+:root.glass #top button,:root.glass #bar button{color:#fff}
+:root.glass #tbtns button:hover,:root.glass #bar button:hover{background:rgba(255,255,255,.18)}
+:root.glass #tbtns #tclose:hover{background:rgba(232,17,35,.85)}
+:root.glass #tlogo img{filter:drop-shadow(0 1px 4px rgba(0,0,0,.35))}
+:root.glass #fill{box-shadow:0 0 12px var(--ac)}
+/* menus, panels, tooltips: frosted glass */
+:root.glass #pop,:root.glass #trtip,:root.glass #hud,:root.glass #mb{background:var(--bg1);-webkit-backdrop-filter:blur(30px) saturate(160%);backdrop-filter:blur(30px) saturate(160%);border-color:rgba(255,255,255,.26);box-shadow:0 10px 36px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.25)}
+:root.glass #dmenu{background:rgba(24,26,58,.9);border-color:rgba(255,255,255,.26);box-shadow:0 10px 36px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.25)}
+:root.glass .sp .ft{background:transparent}
+:root.glass #trtip .tra{background:transparent}
+/* home screen */
+:root.glass #empty .tile{backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);box-shadow:0 14px 44px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.55),0 0 0 1px rgba(255,255,255,.4)}
+:root.glass #empty .en{filter:drop-shadow(0 2px 10px rgba(0,0,0,.25))}
+:root.glass #empty .drop,:root.glass #empty .cd{background:linear-gradient(135deg,rgba(255,255,255,.22),rgba(255,255,255,.07));backdrop-filter:blur(26px) saturate(170%);-webkit-backdrop-filter:blur(26px) saturate(170%)}
+:root.glass #empty .eb button.g{backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.45),inset 0 1px 0 rgba(255,255,255,.5)}
+:root.glass #empty .rec h3 button{color:#fff}
 </style></head><body>
 <div id="top"><div id="tlogo"><img src="logo.png" width="18" height="18" alt="" style="border-radius:4px;display:block"><button id="tmenu">NixPlayer</button><div id="dmenu"></div></div><div id="ttl"></div><div id="tbtns"></div></div>
 <div id="stage">
@@ -232,9 +283,14 @@ let bright=1,fit=0,name='',url='',subOn=true,hudT;
 const fmt=t=>{t=Math.max(0,t|0);const h=t/3600|0,m=(t%3600)/60|0,s=t%60;return(h?h+':'+String(m).padStart(2,'0'):m)+':'+String(s).padStart(2,'0')};
 function hud(t,ic,pct){const h=$('#hud');h.innerHTML=(ic?ico(ic):'')+'<span></span>'+(pct!=null?'<i class="hb"><b></b></i>':'');h.querySelector('span').textContent=t;if(pct!=null)h.querySelector('b').style.width=Math.max(0,Math.min(100,pct))+'%';h.classList.add('show');clearTimeout(hudT);hudT=setTimeout(()=>h.classList.remove('show'),1000)}
 const volIc=x=>x<=0?'mute':x<.5?'vol1':'vol';
-function style(){root.style.setProperty('--sz',S.ssz+'px');root.style.setProperty('--sc',S.sc);root.style.setProperty('--sb',window.hexA?hexA(S.sb,S.sbo):S.sb+'99')}
+function style(){root.style.setProperty('--ga',S.glassA!=null?S.glassA:.28);root.style.setProperty('--sz',S.ssz+'px');root.style.setProperty('--sc',S.sc);root.style.setProperty('--sb',window.hexA?hexA(S.sb,S.sbo):S.sb+'99')}
 style();
-function applyTheme(){const m=S.theme||'system',mq=matchMedia('(prefers-color-scheme: light)');root.dataset.theme=m==='light'||(m==='system'&&mq.matches)?'light':'dark'}
+let _glass=null;
+function applyTheme(){const m=S.theme||'system',mq=matchMedia('(prefers-color-scheme: light)'),g=m==='glass';
+ root.dataset.theme=m==='light'||(m==='system'&&mq.matches)?'light':'dark';root.classList.toggle('glass',g);
+ /* Glass = the dark theme + transparency. Ask the window for its acrylic background only when the choice changes. */
+ if(g!==_glass){_glass=g;if(!g)root.classList.remove('gnative');
+  if(window.desk&&desk.glass)Promise.resolve(desk.glass(g)).then(n=>root.classList.toggle('gnative',g&&!!n)).catch(()=>{})}}
 matchMedia('(prefers-color-scheme: light)').addEventListener('change',()=>{if((S.theme||'system')==='system')applyTheme()});
 applyTheme();
 const setB=b=>{bright=Math.min(2,Math.max(.3,b));if(window.applyFx)applyFx();else v.style.filter=`brightness(${bright})`;hud(Math.round(bright*100)+'%','bri',(bright-.3)/1.7*100)};
@@ -463,7 +519,7 @@ const B=[
 ['pip','pip','Pop-up play (P)',popup],
 ['size','size','Window / fit size',()=>pop('size',p=>{head(p,'Fit');if(window.deskAspectRows)deskAspectRows(p,row);else ['contain','cover','fill'].forEach((m,i)=>row(p,['Fit','Fill (crop)','Stretch'][i],()=>{v.style.objectFit=m},v.style.objectFit==m));row(p,'Fullscreen (F)',fs);if(window.deskSizeRows)deskSizeRows(p,row);else{row(p,'Resize window 960×540',()=>{try{window.resizeTo(960,540)}catch(e){}});row(p,'New small window',()=>window.open(location.href,'_blank','popup,width=640,height=380'))}})],
 ['list','list','Playlist (L)',()=>window.togglePL&&togglePL()],
-['hist','hist','Watch history (Ctrl+H)',()=>window.toggleHist&&toggleHist()],
+['hist','hist','Watch history (H)',()=>window.toggleHist&&toggleHist()],
 ];
 const bw=$('#btns'),bt={};
 B.forEach(([id,ic,tt,fn])=>{const b=document.createElement('button');if(id=='spd')b.textContent='1x';else b.innerHTML=ico(ic,id=='play'?'f':'');b.title=tt;b.onclick=e=>{e.stopPropagation();fn()};bt[id]=b;bw.appendChild(b);if(id=='rec'||id=='next'){const s=document.createElement('span');s.className='sep';bw.appendChild(s)}if(id=='aud'){const s=document.createElement('span');s.className='sp';bw.appendChild(s)}});
@@ -477,12 +533,12 @@ const tb={},tbw=$('#tbtns');
 [['top','Always on top (T)',()=>onTop(),'top'],['min','Minimize',()=>window.desk&&desk.minimize(),'min'],['max','Maximize',()=>window.desk&&desk.toggleMax(),'max'],['fs','Fullscreen (F)',fs,'fs'],['close','Close',()=>window.desk?desk.closeWin():window.close(),'close']].forEach(([id,tt,fn,ic])=>{const b=document.createElement('button');b.id='t'+id;b.title=tt;b.innerHTML=ico(ic);b.onclick=e=>{e.stopPropagation();fn()};tb[id]=b;tbw.appendChild(b)});
 bt.top=tb.top;
 const tmn=$('#tmenu'),dmn=$('#dmenu');tmn.innerHTML='NixPlayer'+ico('chev');$('#mb').innerHTML=ico('mute');
-const TH={system:'System',dark:'Dark',light:'Light'};
+const TH={system:'System',dark:'Dark',light:'Light',glass:'Glass'};
 function buildMenu(){
  dmn.innerHTML='';
- const TI={system:'monitor',dark:'moon',light:'sun'},th=S.theme||'system';
- [['open','Open file…','Ctrl+O',()=>bt.open.click()],['url','Open link…','Ctrl+U',()=>bt.url.click()],['list','Playlist','L',()=>bt.list.click()],['hist','Watch history','Ctrl+H',()=>bt.hist.click()],
-  [TI[th],'Theme: '+TH[th],'click to change',()=>{const o=['system','dark','light'];S.theme=o[(o.indexOf(S.theme||'system')+1)%3];save();applyTheme();hud('Theme: '+TH[S.theme],TI[S.theme])}],
+ const TI={system:'monitor',dark:'moon',light:'sun',glass:'palette'},th=S.theme||'system';
+ [['open','Open file…','Ctrl+O',()=>bt.open.click()],['url','Open link…','Ctrl+U',()=>bt.url.click()],['list','Playlist','L',()=>bt.list.click()],['hist','Watch history','H',()=>bt.hist.click()],
+  [TI[th],'Theme: '+TH[th],'click to change',()=>{const o=['system','dark','light','glass'];S.theme=o[(o.indexOf(S.theme||'system')+1)%4];save();applyTheme();hud('Theme: '+TH[S.theme],TI[S.theme])}],
   ['settings','Settings','Ctrl+,',()=>openSet()],['logout','Exit','',()=>tb.close.click()]].forEach(([ic,t,k,fn])=>{const d=document.createElement('div');d.className='m';d.innerHTML='<span>'+ico(ic)+'<b></b></span><small></small>';d.querySelector('b').textContent=t;d.querySelector('small').textContent=k;d.onclick=()=>{dmn.style.display='none';fn()};dmn.appendChild(d)});
 }
 tmn.onclick=e=>{e.stopPropagation();if(dmn.style.display=='block'&&!dmn.dataset.ctx)dmn.style.display='none';else{homeMenu();buildMenu();dmn.style.display='block'}};

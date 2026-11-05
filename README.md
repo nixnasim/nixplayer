@@ -50,14 +50,14 @@ The installer appears in `dist/` (`NixPlayer-Setup-<version>.exe`). The first in
 - **Time watched / time left:** the left label shows how much you have watched, the right one shows the total. Click either label to switch the right one to time left (-12:34). Hover for watched %, left and total.
 - **Online video (Ctrl+U):** paste a link. Direct video/audio links (.mp4, .webm, .mp3 …) play right away. YouTube and other sites need **yt-dlp** (Windows: `winget install yt-dlp`, or put `yt-dlp.exe` next to `NixPlayer.exe` / in `bin/`). You can also paste a link with Ctrl+V, drop a link on the window, or run `npm start -- "https://…"`.
 - **Open on NixPlayer from a browser:** the installer registers `nixplayer://open?url=<link>`. Bookmarklet: `javascript:location.href='nixplayer://open?url='+encodeURIComponent(location.href)`
-- **Watch history (Ctrl+H):** every local and online video with thumbnail, date, progress; click to resume. Turn it off or clear it in Settings → General.
-- **Appearance:** Settings → General → Appearance (System / Dark / Light), or NixPlayer menu → Theme.
+- **Watch history (H):** every local and online video with thumbnail, date, progress; click to resume. Turn it off or clear it in Settings → General.
+- **Appearance:** Settings → General → Appearance (System / Dark / Light / Glass; Glass makes the window see-through, real acrylic on Windows 11), or NixPlayer menu → Theme.
 - Hidden by default (show them in Settings → Buttons): Open file, Open link, Pop-up play, Window / fit size. Open file / link still work with Ctrl+O / Ctrl+U and the NixPlayer menu.
 - One **Subtitles** button: click it for on/off, load file, download and style. Y also toggles subtitles.
 - **Speed keys:** X slower, Z back to 1.0×, C faster (step set in Settings → Playback, default 0.1×). `[` / `]` step through the Speed menu values (0.5x, 0.75x, 1x, 1.25x, 1.5x, 2x, 3x) and Backspace returns to 1x.
 - Open files with Ctrl+O, drag & drop, "Open with", or the command line. Multiple files become a playlist; a single file queues the rest of its folder.
 - Hold the left mouse button to play at 2x (speed configurable). Swipe **up/down** on the left side for brightness, on the right side for volume (only vertical swipes count; left/right or diagonal drags do nothing). Mouse wheel changes volume.
-- Subtitles: .srt/.vtt, auto-loads a subtitle with the same file name, size / font / colors / background opacity / position, delay adjustment (G / H), on/off (Y), OpenSubtitles search button.
+- Subtitles: .srt/.vtt, auto-loads a subtitle with the same file name, size / font / colors / background opacity / position, delay adjustment (D / F), on/off (Y), OpenSubtitles search button.
 - Audio track selector, mute, volume up to 200% (opt-in), remembers volume.
 - Resume where you left off, repeat one/all, shuffle, previous/next, frame step, speed up/down.
 - Real always-on-top (T), pop-up play (P), window sizing presets, lock aspect ratio, fit window to video, fullscreen (Enter or F11, both rebindable).
@@ -72,7 +72,7 @@ The installer appears in `dist/` (`NixPlayer-Setup-<version>.exe`). The first in
 | Space | Play / pause | M | Mute |
 | ← / → | Skip 5 s | Shift+← / → | Skip 10 s |
 | ↑ / ↓ | Volume | Y | Subtitles on/off |
-| G / H | Subtitle delay − / + | Enter / F11 | Fullscreen |
+| D / F | Subtitle delay − / + | Enter / F11 | Fullscreen |
 | P | Pop-up play | T | Always on top |
 | B | Bookmark | S | Screenshot |
 | PageUp / PageDown | Previous / next | X / Z / C | Slower / reset to 1.0× / faster |
@@ -80,7 +80,7 @@ The installer appears in `dist/` (`NixPlayer-Setup-<version>.exe`). The first in
 | , / . | Previous / next frame | Alt+↑ / ↓ | Brightness |
 | Ctrl+O | Open | L | Playlist |
 | Ctrl+, | Settings | R | Record |
-| Ctrl+U | Open link | Ctrl+H | Watch history |
+| Ctrl+U | Open link | H | Watch history |
 
 All of them can be changed in Settings → Shortcuts.
 

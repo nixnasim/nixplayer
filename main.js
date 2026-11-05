@@ -1,7 +1,7 @@
 const {app,BrowserWindow,ipcMain,dialog,shell,protocol,screen,powerSaveBlocker,net,session}=require('electron');
 const {execFile}=require('child_process'),crypto=require('crypto');
 const AV=require('./av.js'),WP=require('./webproxy.js');
-const path=require('path'),fs=require('fs'),{Readable}=require('stream');
+const path=require('path'),fs=require('fs'),os=require('os'),{Readable}=require('stream');
 
 const TOPH=32; // height of the custom top bar (px)
 const MEDIA=/\.(mp4|m4v|mkv|webm|mov|avi|wmv|flv|ts|mpg|mpeg|3gp|ogv|mp3|flac|wav|ogg|opus|m4a|aac)$/i;
@@ -458,6 +458,18 @@ ipcMain.handle('rec:save',(e,buf,dir,name)=>{
 });
 ipcMain.handle('shell:reveal',(e,p)=>shell.showItemInFolder(p));
 
+// Glass theme: on Windows 11 (build 22621+) the window background becomes real acrylic (the desktop shows through, blurred).
+// Everywhere else the renderer draws its own glass look. Returns true when the native material is active.
+ipcMain.handle('win:glass',(e,on)=>{
+  const w=wOf(e);if(!w)return false;
+  let native=false;
+  try{
+    const build=parseInt(String(os.release()).split('.')[2],10)||0;
+    native=process.platform==='win32'&&build>=22621&&typeof w.setBackgroundMaterial==='function';
+    if(native){w.setBackgroundMaterial(on?'acrylic':'none');w.setBackgroundColor(on?'#00000000':'#000000')}
+  }catch(err){native=false}
+  return !!on&&native;
+});
 ipcMain.handle('win:top',(e,on)=>{const win=wOf(e);if(!win)return false;win.setAlwaysOnTop(!!on,'floating');return win.isAlwaysOnTop()});
 ipcMain.handle('win:size',(e,w,h,xh)=>{
   xh=Math.max(0,+xh||0);
@@ -496,7 +508,7 @@ function setOverlay(win,paused,has){
   if(!win||win.isDestroyed()||process.platform!=='win32')return;
   try{
     if(!has){win.setOverlayIcon(null,'');win.setProgressBar(-1);return}
-    win.setOverlayIcon(ovIcon(paused?'ov-play':'ov-pause'),paused?'Paused':'Playing');
+    win.setOverlayIcon(ovIcon(paused?'ov-pause':'ov-play'),paused?'Paused':'Playing');/* badge shows the current state (like PotPlayer): playing = play triangle, paused = pause bars */
   }catch(_){}
 }
 ipcMain.handle('thumb:state',(e,paused,has)=>{const w=wOf(e);setThumb(w,!!paused);setOverlay(w,!!paused,has!==false)});
@@ -506,6 +518,9 @@ ipcMain.handle('thumb:progress',(e,f)=>{
   win.__prog=p;
   try{win.setProgressBar(p,{mode:'normal'})}catch(_){}
 });
+// title bar dragging done from the page (a native drag region would swallow the mouse wheel)
+ipcMain.handle('win:dragStart',e=>{const w=wOf(e);if(!w||w.isDestroyed()||w.isFullScreen()||w.isMaximized())return false;const c=screen.getCursorScreenPoint();w.__drag={c,b:w.getBounds()};return true});
+ipcMain.handle('win:dragMove',e=>{const w=wOf(e);if(!w||w.isDestroyed()||!w.__drag)return;const c=screen.getCursorScreenPoint(),d=w.__drag;w.setBounds({x:d.b.x+c.x-d.c.x,y:d.b.y+c.y-d.c.y,width:d.b.width,height:d.b.height})});
 ipcMain.handle('win:min',e=>{const win=wOf(e);if(win)win.minimize()});
 ipcMain.handle('win:max',e=>{const win=wOf(e);if(!win)return;if(win.isFullScreen())win.setFullScreen(false);win.isMaximized()?win.unmaximize():win.maximize()});
 ipcMain.handle('win:close',e=>{const win=wOf(e);if(win)win.close()});

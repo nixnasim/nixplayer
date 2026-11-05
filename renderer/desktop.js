@@ -12,7 +12,7 @@ const hexA=(h,a)=>{const n=parseInt(h.slice(1),16);return`rgba(${n>>16&255},${n>
 window.hexA=hexA;
 
 /* ---------- settings defaults (merged into the S object of the main script) ---------- */
-const D={hideMs:2500,accent:'#2f7bff',theme:'system',history:true,onTop:false,awake:true,resume:true,autoNext:true,loop:'off',shuffle:false,
+const D={hideMs:2500,accent:'#2f7bff',theme:'system',glassA:.28,history:true,onTop:false,awake:true,resume:true,autoNext:true,loop:'off',shuffle:false,
   autoFit:false,lockAspect:false,shotDir:'',recDir:'',shotFmt:'png',defSpeed:1,gest:false,autoHide:false,clickAct:'none',dblAct:'play',spdStep:.1,holdOn:true,wheel:true,
   aspect:'fit',con:1,sat:1,flip:false,maxVol:1,vol:1,remVol:true,loud:'medium',
   autoSub:true,sbo:0,sout:true,spos:5,sfont:'system-ui, sans-serif',sdelay:0,trOn:true,trLang:'bn',trHover:true,trSel:true,trPause:false,trDic:false,trLeft:'search',trRight:'pin',trEngine:'google',trUrl:'https://www.google.com/search?q={q}'};
@@ -603,6 +603,23 @@ function togglePL(){
   }
   const open=p.style.display!=='flex';closeSide();p.style.display=open?'flex':'none';renderPL();
 }
+/* ---------- logo (top left) = back to the home screen ---------- */
+const EM0=($('#empty .em')||{}).textContent||'';
+function goHome(){
+  const e=$('#empty');if(!e||e.style.display!=='none')return; /* already on the home screen */
+  saveResume();closeDlg();closeSide();
+  cur='';AVs=null;audTok++;stopAud();liveReset();window.prevHook=null;
+  if(hlsI){try{hlsI.destroy()}catch(_){}hlsI=null}
+  try{v.pause()}catch(_){}
+  v.querySelectorAll('track').forEach(t=>t.remove());curSub=null;
+  v.removeAttribute('src');try{v.load()}catch(_){}
+  try{pv.removeAttribute('src')}catch(_){}
+  const sb=$('#subs');if(sb)sb.style.display='none';
+  name='';document.title='NixPlayer';
+  e.querySelector('.em').textContent=EM0;e.style.display='flex';
+  renderPL();renderHome();
+}
+{const lg=document.querySelector('#tlogo img');if(lg){lg.style.cursor='pointer';lg.title='Home';lg.addEventListener('click',e=>{e.stopPropagation();goHome()})}}
 function closeSide(){document.querySelectorAll('.side').forEach(x=>x.style.display='none')}
 window.togglePL=togglePL;
 
@@ -704,7 +721,10 @@ const preset=d=>{const r=v.playbackRate,e=.001,n=d>0?SPD.find(x=>x>r+e):[...SPD]
 const rate=d=>{v.playbackRate=Math.min(4,Math.max(.25,Math.round((v.playbackRate+d)*100)/100));hud(v.playbackRate+'x','speed')};
 let fd=1/30,lm=0;
 if(v.requestVideoFrameCallback){const rf=(n,m)=>{const d=m.mediaTime-lm;if(d>0&&d<.2)fd=d;lm=m.mediaTime;v.requestVideoFrameCallback(rf)};v.requestVideoFrameCallback(rf)}
-const frame=d=>{v.pause();v.currentTime=Math.max(0,v.currentTime+d*fd)};
+const tcode=t=>{t=Math.max(0,t);const h=Math.floor(t/3600),m=Math.floor(t%3600/60),s=Math.floor(t%60),ms=Math.round((t%1)*1000)%1000;return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')+'.'+String(ms).padStart(3,'0')};
+/* frame step: shows the new time (hh:mm:ss.mmm), the frame number and the frame rate on the screen */
+const frame=d=>{v.pause();const t=Math.max(0,v.currentTime+d*fd);v.currentTime=t;
+  hud((d>0?'Next frame':'Previous frame')+'  ·  '+tcode(t)+'  ·  frame '+Math.round(t/fd)+'  ·  '+Math.round(1/fd)+' fps',d>0?'next':'prev')};
 
 /* ---------- keyboard shortcuts (rebindable) ---------- */
 const ACT={
@@ -717,8 +737,8 @@ const ACT={
   volDn:['Volume down','ArrowDown',()=>deskVol(LV-S.vstep/100)],
   mute:['Mute','m',mute],
   sub:['Subtitles on/off','y',subToggle],
-  subM:['Subtitle delay −100 ms','g',()=>subD(-100)],
-  subP:['Subtitle delay +100 ms','h',()=>subD(100)],
+  subM:['Subtitle delay −100 ms','d',()=>subD(-100)],
+  subP:['Subtitle delay +100 ms','f',()=>subD(100)],
   subS:['Search subtitles online','Ctrl+j',()=>subSearch()],
   fs:['Fullscreen','Enter',fs],
   fs2:['Fullscreen (second key)','F11',fs],
@@ -743,7 +763,7 @@ const ACT={
   open:['Open file','Ctrl+o',openDlg],
   list:['Playlist','l',togglePL],
   url:['Open link (online video)','Ctrl+u',urlDlg],
-  hist:['Watch history','Ctrl+h',toggleHist],
+  hist:['Watch history','h',toggleHist],
   set:['Settings','Ctrl+,',()=>openSettings()],
 };
 const keys=()=>{const m={};for(const a in ACT)m[a]=a in S.keys?S.keys[a]:ACT[a][1];return m};
@@ -910,7 +930,8 @@ const pct=x=>Math.round(x*100)+'%';
 const TABS={
   General:{ic:'settings',f(box,tab){
     let c=sec(box,'Appearance','palette');
-    ctl(c,{t:'seg',l:'Theme',d:'System follows your Windows light / dark mode.',k:'theme',opts:[['system','System'],['dark','Dark'],['light','Light']]});
+    ctl(c,{t:'seg',l:'Theme',d:'System follows your Windows light / dark mode.',k:'theme',opts:[['system','System'],['dark','Dark'],['light','Light'],['glass','Glass']]});
+    ctl(c,{t:'rng',l:'Glass tint',d:'Glass theme only: how frosted the bars and panels are. Lower = more see-through. On Windows 11 the window itself becomes real acrylic glass.',k:'glassA',min:.05,max:.6,step:.01,fmt:x=>Math.round(x/.6*100)+'%'});
     ctl(c,{t:'swatch',l:'Accent color',d:'Used for the progress bar, highlights and switches.',k:'accent'});
     ctl(c,{t:'chk',l:'Auto-hide controls',d:'Off (default): the control bar always stays below the video and never covers it. On: it floats over the video and fades away when the mouse is still. In fullscreen the controls always hide and come back at the top / bottom edge.',k:'autoHide'});
     ctl(c,{t:'rng',l:'Hide controls after',d:'How long the control bar stays visible while the mouse is still (when auto-hide is on).',k:'hideMs',min:1000,max:10000,step:500,fmt:x=>(x/1000).toFixed(1)+' s'});
@@ -988,7 +1009,7 @@ const TABS={
     ctl(c,{t:'chk',l:'Pause the video while a meaning is shown',k:'trPause'});
     c=sec(box,'Position & timing','timer');
     ctl(c,{t:'rng',l:'Distance from the bottom of the picture',d:'Default 5%. The text is lifted above the control bar while it is visible.',k:'spos',min:0,max:40,fmt:x=>x+'%'});
-    ctl(c,{t:'num',l:'Delay (ms)',d:'Positive = later, negative = earlier. Also G / H while playing.',k:'sdelay',min:-60000,max:60000,step:50});
+    ctl(c,{t:'num',l:'Delay (ms)',d:'Positive = later, negative = earlier. Also D / F while playing.',k:'sdelay',min:-60000,max:60000,step:50});
   }},
   Capture:{ic:'capture',f(box,tab){
     let c=sec(box,'Screenshots','shot');
@@ -1089,10 +1110,15 @@ function openSettings(tab){
 window.openSettings=openSettings;
 
 /* ---------- wiring ---------- */
-st.addEventListener('wheel',e=>{
-  if(S.wheel===false||e.target.closest('#bar,#pop,#dlg,#plist'))return;
+/* mouse wheel = volume: over the picture, the top bar and the control bar - but never over the playlist / history panels, menus or dialogs */
+document.addEventListener('wheel',e=>{
+  if(S.wheel===false||!e.target.closest)return;
+  if(e.target.closest('#pop,#dlg,#plist,.side,#dmenu'))return;
+  if(!e.target.closest('#stage,#top,#bar'))return;
+  if(e.defaultPrevented)return;
+  e.preventDefault();
   deskVol(LV+(e.deltaY<0?1:-1)*S.vstep/100);
-},{passive:true});
+},{passive:false});
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(b)b.blur()},true);
 /* mouse wheel over the Speed / Brightness buttons: scroll up = more, scroll down = less */
 bt.spd.addEventListener('wheel',e=>{e.preventDefault();e.stopPropagation();preset(e.deltaY<0?1:-1)},{passive:false});
@@ -1127,9 +1153,19 @@ v.addEventListener('ended',()=>{saveResume();if(S.loop==='one')return;if(S.autoN
 setInterval(()=>{if(!v.paused)saveResume()},5000);
 addEventListener('beforeunload',saveResume);
 
+/* drag the window by the top bar (JS drag, so the mouse wheel still works over it) + double click = maximize / restore */
+{const T=$('#top');let on=false,raf=0;
+ T.addEventListener('pointerdown',async e=>{
+  if(e.button||document.fullscreenElement||e.target.closest('button,#dmenu,#tlogo img'))return;
+  if(!await desk.dragStart())return;
+  on=true;try{T.setPointerCapture(e.pointerId)}catch(_){}});
+ T.addEventListener('pointermove',e=>{if(!on||raf)return;raf=requestAnimationFrame(()=>{raf=0;if(on)desk.dragMove()})});
+ const end=()=>{on=false};
+ T.addEventListener('pointerup',end);T.addEventListener('pointercancel',end);T.addEventListener('lostpointercapture',end);
+ T.addEventListener('dblclick',e=>{if(document.fullscreenElement||e.target.closest('button,#dmenu,#tlogo img'))return;desk.toggleMax()})}
 /* double click on the title bar while in fullscreen: leave fullscreen and return to the last window size */
 $('#top').addEventListener('dblclick',e=>{
-  if(!document.fullscreenElement||e.target.closest('button,#dmenu'))return;
+  if(!document.fullscreenElement||e.target.closest('button,#dmenu,#tlogo img'))return;
   e.preventDefault();desk.leaveFull();document.exitFullscreen().catch(()=>{});
 });
 /* the control bar never wraps: tell the window how wide it must be at least so every visible button stays on one row */

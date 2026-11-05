@@ -32,7 +32,10 @@ git push --follow-tags
 
 GitHub Actions builds the installer and publishes it. Users with NixPlayer installed see
 "NixPlayer 1.6.1 is available → Update now" within 6 hours (or at once via Settings → About → Check for updates).
-Add a line to `CHANGELOG.md` for each release; you can paste it into the release notes on GitHub.
+**Release notes are automatic:** before each release, write what changed in `CHANGELOG.md` under a heading like `## [1.7.1] - 2026-11-05`
+(sections Added / Changed / Fixed). The release workflow copies exactly that section into the GitHub Release, the "update available"
+box shows it ("What's new:"), and after the update the first start shows "What's new in NixPlayer x.y.z" once.
+If the section for the version is missing, no notes are shown.
 
 **Build by hand instead (optional):** `npm install`, then `npm run dist` (installer in `dist/`, nothing published)
 or set `GH_TOKEN` to a personal access token and run `npm run release`.

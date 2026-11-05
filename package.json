@@ -1,6 +1,6 @@
 {
   "name": "nixplayer",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "NixPlayer - a simple desktop video player with a clean custom top bar",
   "main": "main.js",
   "author": "Nasimul Islam Nasim",
@@ -101,6 +101,10 @@
       {
         "from": "THIRD-PARTY-NOTICES.md",
         "to": "THIRD-PARTY-NOTICES.md"
+      },
+      {
+        "from": "CHANGELOG.md",
+        "to": "CHANGELOG.md"
       }
     ],
     "publish": [
