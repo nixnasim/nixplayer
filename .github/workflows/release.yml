@@ -32,15 +32,20 @@ jobs:
       - run: npm ci
       - name: Release notes from CHANGELOG.md
         run: node scripts/release-notes.js
+      - name: Create the GitHub Release first (with the CHANGELOG notes)
+        # Without this, electron-builder uploads several files at once and GitHub can end up with TWO releases for the same
+        # tag (one with latest.yml, one with the installer), which makes the in-app update fail with "404".
+        shell: bash
+        run: |
+          V=$(node -p "require('./package.json').version")
+          if gh release view "v$V" >/dev/null 2>&1; then
+            gh release edit "v$V" --title "NixPlayer $V" --notes-file release-notes.md
+          else
+            gh release create "v$V" --title "NixPlayer $V" --notes-file release-notes.md
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and publish
         run: npx electron-builder --win --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}   # provided by GitHub, nothing to create
-      - name: Put the CHANGELOG notes on the GitHub Release
-        continue-on-error: true   # the installer is already published; a notes problem must not fail the release
-        shell: bash
-        run: |
-          V=$(node -p "require('./package.json').version")
-          gh release edit "v$V" --notes-file release-notes.md
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
