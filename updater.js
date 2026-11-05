@@ -2,7 +2,7 @@
 // Flow: check GitHub Releases -> ask once ("Update now" / "Later") -> download -> silent install into the
 // SAME folder as the current install -> NixPlayer starts again. The user never picks a location.
 const {app,dialog,shell,ipcMain}=require('electron');
-const path=require('path'),fs=require('fs');
+const path=require('path'),fs=require('fs'),https=require('https');
 const PKG=require('./package.json');
 
 const INFO=PKG.nixplayer||{};
@@ -64,6 +64,17 @@ function changelogOf(ver){
     return plain(L.slice(s+1,e).join('\n'));
   }catch(_){return ''}
 }
+// fallback: the body of the GitHub Release (the update info does not always carry the notes)
+function ghNotes(ver){
+  return new Promise(res=>{
+    try{
+      const p=((PKG.build||{}).publish||[])[0]||{};if(!p.owner||!p.repo)return res('');
+      const rq=https.get({host:'api.github.com',path:'/repos/'+p.owner+'/'+p.repo+'/releases/tags/v'+ver,headers:{'User-Agent':'NixPlayer','Accept':'application/vnd.github+json'},timeout:4000},r=>{
+        let b='';r.on('data',c=>b+=c);r.on('end',()=>{try{res(r.statusCode===200?String(JSON.parse(b).body||''):'')}catch(_){res('')}})});
+      rq.on('timeout',()=>{rq.destroy();res('')});rq.on('error',()=>res(''));
+    }catch(_){res('')}
+  });
+}
 /* ---------- "What's new" after an update: shown once, the first time the new version starts ---------- */
 function whatsNew(){
   try{
@@ -87,7 +98,7 @@ async function onAvailable(info){
   const v=info&&info.version;
   if(!manual&&asked.has(v)){done();return}     // do not nag again for the same version
   const w=getWin();
-  const notes=notesOf(info);
+  let notes=notesOf(info);if(!notes)notes=plain(await ghNotes(v));
   const o={type:'info',title:'NixPlayer update',message:'NixPlayer '+v+' is available',
     detail:(notes?"What's new:\n"+clip(notes,1400)+'\n\n':'')+'You have '+app.getVersion()+'. Press "Update now": NixPlayer downloads the update, installs it in the same place and opens again by itself.',
     buttons:['Update now','Later'],defaultId:0,cancelId:1,noLink:true};
