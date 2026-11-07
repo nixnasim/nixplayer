@@ -1,6 +1,6 @@
 {
   "name": "nixplayer",
-  "version": "1.7.1",
+  "version": "1.7.3",
   "description": "NixPlayer - a simple desktop video player with a clean custom top bar",
   "main": "main.js",
   "author": "Nasimul Islam Nasim",
@@ -33,23 +33,95 @@
     ],
     "fileAssociations": [
       {
-        "ext": [
-          "mp4",
-          "m4v",
-          "mkv",
-          "webm",
-          "mov",
-          "avi",
-          "mp3",
-          "flac",
-          "wav",
-          "ogg",
-          "m4a"
-        ],
-        "name": "NixPlayer.Media",
+        "ext": "mp4",
+        "name": "NixPlayer.mp4",
+        "description": "NixPlayer MP4 File",
         "role": "Viewer",
-        "description": "NixPlayer Media File",
-        "icon": "fileicon.ico"
+        "icon": "file-mp4.ico"
+      },
+      {
+        "ext": "m4v",
+        "name": "NixPlayer.m4v",
+        "description": "NixPlayer M4V File",
+        "role": "Viewer",
+        "icon": "file-m4v.ico"
+      },
+      {
+        "ext": "mkv",
+        "name": "NixPlayer.mkv",
+        "description": "NixPlayer MKV File",
+        "role": "Viewer",
+        "icon": "file-mkv.ico"
+      },
+      {
+        "ext": "webm",
+        "name": "NixPlayer.webm",
+        "description": "NixPlayer WEBM File",
+        "role": "Viewer",
+        "icon": "file-webm.ico"
+      },
+      {
+        "ext": "mov",
+        "name": "NixPlayer.mov",
+        "description": "NixPlayer MOV File",
+        "role": "Viewer",
+        "icon": "file-mov.ico"
+      },
+      {
+        "ext": "avi",
+        "name": "NixPlayer.avi",
+        "description": "NixPlayer AVI File",
+        "role": "Viewer",
+        "icon": "file-avi.ico"
+      },
+      {
+        "ext": "mp3",
+        "name": "NixPlayer.mp3",
+        "description": "NixPlayer MP3 File",
+        "role": "Viewer",
+        "icon": "file-mp3.ico"
+      },
+      {
+        "ext": "flac",
+        "name": "NixPlayer.flac",
+        "description": "NixPlayer FLAC File",
+        "role": "Viewer",
+        "icon": "file-flac.ico"
+      },
+      {
+        "ext": "wav",
+        "name": "NixPlayer.wav",
+        "description": "NixPlayer WAV File",
+        "role": "Viewer",
+        "icon": "file-wav.ico"
+      },
+      {
+        "ext": "ogg",
+        "name": "NixPlayer.ogg",
+        "description": "NixPlayer OGG File",
+        "role": "Viewer",
+        "icon": "file-ogg.ico"
+      },
+      {
+        "ext": "m4a",
+        "name": "NixPlayer.m4a",
+        "description": "NixPlayer M4A File",
+        "role": "Viewer",
+        "icon": "file-m4a.ico"
+      },
+      {
+        "ext": "srt",
+        "name": "NixPlayer.srt",
+        "description": "NixPlayer SRT Subtitle",
+        "role": "Viewer",
+        "icon": "file-srt.ico"
+      },
+      {
+        "ext": "vtt",
+        "name": "NixPlayer.vtt",
+        "description": "NixPlayer VTT Subtitle",
+        "role": "Viewer",
+        "icon": "file-vtt.ico"
       }
     ],
     "win": {

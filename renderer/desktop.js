@@ -264,13 +264,30 @@ function histTouch(){
     try{
       const c=document.createElement('canvas');c.width=160;c.height=90;const x=c.getContext('2d');x.fillStyle='#000';x.fillRect(0,0,160,90);
       const k=Math.min(160/v.videoWidth,90/v.videoHeight),w=v.videoWidth*k,h=v.videoHeight*k;x.drawImage(v,(160-w)/2,(90-h)/2,w,h);
-      e.img=c.toDataURL('image/jpeg',.6);
+      /* a black frame (fade-in, or a codec that cannot be shown) is not a thumbnail: skip it and try again later */
+      const px=x.getImageData(0,0,160,90).data;let sum=0,n=0;for(let i=0;i<px.length;i+=16){sum+=px[i]+px[i+1]+px[i+2];n+=3}
+      if(sum/n>14)e.img=c.toDataURL('image/jpeg',.6);
     }catch(_){}
   }
   histSave();
 }
 
 
+/* no thumbnail (audio file, black frame, online link): the NixPlayer logo with the file format beside it */
+const fmtOf=e=>{if(e.web&&!/\.[a-z0-9]{2,4}($|\?)/i.test(e.k||''))return 'WEB';const m=String(e.k||e.title||'').split(/[?#]/)[0].match(/\.([a-z0-9]{2,4})$/i);return m?m[1].toUpperCase():'MEDIA'};
+function noThumb(th,e){th.classList.add('nt');th.innerHTML='<img src="logo.png" alt=""><em>'+fmtOf(e)+'</em>'}
+{const st=document.createElement('style');st.textContent='.nt{display:flex;align-items:center;justify-content:center;gap:6px;background:radial-gradient(circle at 25% 15%,rgba(37,184,214,.35),transparent 55%),linear-gradient(135deg,#2a6f8f,#1b1f5e)!important}.nt img{width:34%;max-width:46px;max-height:70%;object-fit:contain;filter:drop-shadow(0 0 8px rgba(60,200,255,.45))}.nt em{font:700 10px Inter,sans-serif;font-style:normal;color:#fff;background:rgba(8,10,52,.85);border:1px solid rgba(95,215,245,.8);border-radius:6px;padding:1px 5px;align-self:flex-end;margin-bottom:22%}.th.nt img{width:46%;max-width:none}.th.nt em{font-size:8.5px;padding:0 3px;border-radius:4px;margin-bottom:14%}';document.head.appendChild(st)}
+/* history saved by older versions can hold black thumbnails: remove them once, they then get the logo placeholder */
+setTimeout(()=>{
+  let left=0,changed=false;
+  const fin=()=>{if(--left===0&&changed){histSave();renderHome();renderHist()}};
+  HC.forEach(e=>{
+    if(!e||!e.img)return;left++;
+    const im=new Image();
+    im.onload=()=>{try{const c=document.createElement('canvas');c.width=16;c.height=9;const x=c.getContext('2d');x.drawImage(im,0,0,16,9);const d=x.getImageData(0,0,16,9).data;let t=0;for(let i=0;i<d.length;i+=4)t+=d[i]+d[i+1]+d[i+2];if(t/(d.length/4*3)<=14){delete e.img;changed=true}}catch(_){}fin()};
+    im.onerror=fin;im.src=e.img;
+  });
+},0);
 /* ---------- home screen: "Continue watching" (from the watch history) ---------- */
 function renderHome(){
   const box=$('#eRec'),row=$('#eRow'),em=$('#empty');
@@ -281,7 +298,7 @@ function renderHome(){
   list.forEach(e=>{
     const th=el('span',{className:'cth'},[el('s',{textContent:fmt(e.dur)}),el('i')]);
     th.lastChild.style.width=Math.min(100,Math.round(e.pos/e.dur*100))+'%';
-    if(e.img)th.style.backgroundImage='url('+e.img+')';
+    if(e.img)th.style.backgroundImage='url('+e.img+')';else noThumb(th,e);
     const c=el('div',{className:'cd',title:e.k},[th,el('p',{},[el('b',{textContent:e.title||e.k}),el('small',{textContent:fmt(e.dur-e.pos)+' left'+(e.web?' - online':'')})])]);
     c.onclick=()=>{pendingSeek=e.pos;openFiles([e.k])};
     row.appendChild(c);
@@ -520,6 +537,15 @@ async function openFiles(files){
   const urls=files.filter(isWeb);files=files.filter(f=>!isWeb(f));
   if(urls.length){PL=urls;idx=0;await playPath(urls[0]);return}
   const subs=files.filter(f=>/\.(srt|vtt)$/i.test(f)),media=files.filter(f=>!/\.(srt|vtt)$/i.test(f));
+  /* only a subtitle was opened (double-click on a .srt / .vtt): play the video with the same name from that folder */
+  if(subs.length&&!media.length&&!cur){
+    let m='';
+    try{
+      const sb=bn(subs[0]).replace(/\.[^.]+$/,'').toLowerCase(),L=await desk.folder(subs[0])||[];
+      let best=-1;for(const f of L){const mb=bn(f).replace(/\.[^.]+$/,'').toLowerCase();if((sb===mb||sb.startsWith(mb+'.')||sb.startsWith(mb+' ')||sb.startsWith(mb+'_')||sb.startsWith(mb+'-'))&&mb.length>best){best=mb.length;m=f}}
+    }catch(e){}
+    if(m)media.push(m);else{hud('No video with this name was found in the folder. Open a video, then open the subtitle.','info');return}
+  }
   if(media.length>1){PL=media;idx=0;await playPath(PL[0])}
   else if(media.length===1){
     const p=media[0];let l=[p];
@@ -573,7 +599,7 @@ function renderPL(){
     const d=en.target;pio.unobserve(d);
     thumb(toURL(d._f),'auto',()=>d.isConnected).then(r=>{
       if(!r)return;
-      if(r.img)d._th.style.backgroundImage='url('+r.img+')';else d._th.innerHTML=ico('music');
+      if(r.img)d._th.style.backgroundImage='url('+r.img+')';else noThumb(d._th,{k:d._f});
       if(r.dur&&isFinite(r.dur))d._du.textContent=fmt(r.dur);
     });
   }),{root:b});
@@ -633,7 +659,7 @@ function renderHist(){
   if(!HC.length)b.appendChild(el('div',{className:'pe',textContent:S.history?'Nothing watched yet.':'History is turned off.'}));
   HC.forEach(e=>{
     const th=el('div',{className:'th'});
-    if(e.img)th.style.backgroundImage='url('+e.img+')';else th.innerHTML=ico(e.web?'globe':'film');
+    if(e.img)th.style.backgroundImage='url('+e.img+')';else noThumb(th,e);
     const hs=histSub(e),pc=hs.pc,sub=hs.txt;
     const pg=el('div',{className:'pg'},[el('i')]);pg.firstChild.style.width=pc+'%';
     const du=el('div',{className:'du',textContent:sub});
@@ -1206,6 +1232,90 @@ applyAll();
 deskVol(S.remVol?S.vol:1,true);
 desk.onTop(!!S.onTop).then(r=>bt.top.classList.toggle('on',r));
 desk.onOpen(openFiles);
+/* ---------- audio files (and anything without a picture): logo + moving bars instead of a black screen ---------- */
+{const st=document.createElement('style');st.textContent=`
+#vis{position:absolute;inset:0;z-index:2;display:none;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;overflow:hidden;
+ background:radial-gradient(ellipse 60% 50% at 50% 38%,rgba(106,79,224,.30),transparent 70%),radial-gradient(ellipse 50% 40% at 15% 90%,rgba(37,184,214,.20),transparent 70%),linear-gradient(160deg,#0d0e2e,#15106a 60%,#0a0c3c)}
+#vis.on{display:flex}
+#vis .vl{width:min(22vh,160px);aspect-ratio:1;display:grid;place-items:center;position:relative;margin-bottom:2.4vh}
+#vis .vl::before{content:'';position:absolute;inset:-18%;border-radius:50%;background:radial-gradient(circle,rgba(60,200,255,.35),rgba(138,90,232,.18) 55%,transparent 70%);transform:scale(var(--pulse,1));transition:transform .08s}
+#vis .vl img{width:78%;position:relative;transform:scale(var(--pulse,1));transition:transform .08s;filter:drop-shadow(0 0 18px rgba(60,200,255,.5))}
+#vis canvas{width:min(80%,760px);height:26vh;max-height:240px}
+#vis .vt{margin-top:2vh;max-width:80%;font:600 15px Inter,sans-serif;color:#e8eaff;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#vis .vf{margin-top:8px;font:700 11px Inter,sans-serif;color:#fff;background:rgba(8,10,52,.85);border:1px solid rgba(95,215,245,.8);border-radius:6px;padding:2px 8px;letter-spacing:.08em}`;
+document.head.appendChild(st);
+const vis=document.createElement('div');vis.id='vis';
+vis.innerHTML='<div class="vl"><img src="logo.png" alt=""></div><canvas width="760" height="240"></canvas><div class="vt"></div><div class="vf"></div>';
+document.getElementById('stage').appendChild(vis);
+const cv=vis.querySelector('canvas'),cx=cv.getContext('2d'),N=44;
+let an=null,data=null,raf=0,level=0,t0=performance.now();
+const audioOnly=()=>!!v.currentSrc&&v.readyState>=1&&!v.videoWidth;
+function hook(){
+  if(an||typeof actx==='undefined'||!actx||!loud)return;
+  try{an=actx.createAnalyser();an.fftSize=256;an.smoothingTimeConstant=.78;loud.output.connect(an);data=new Uint8Array(an.frequencyBinCount)}catch(_){an=null}
+}
+function frame(){
+  raf=0;if(!vis.classList.contains('on'))return;
+  hook();
+  const W=cv.width,H=cv.height,playing=!v.paused&&!v.ended,t=(performance.now()-t0)/1000;
+  let real=false;
+  if(an&&playing){an.getByteFrequencyData(data);let m=0;for(let i=0;i<data.length;i++)m=Math.max(m,data[i]);real=m>0}
+  cx.clearRect(0,0,W,H);
+  const g=cx.createLinearGradient(0,0,W,0);g.addColorStop(0,'#25b8d6');g.addColorStop(.6,'#6a4fe0');g.addColorStop(1,'#b04be8');cx.fillStyle=g;
+  const bw=W/N,gap=bw*.38;let bass=0;
+  for(let i=0;i<N;i++){
+    const k=i<N/2?i:N-1-i,f=k/(N/2);let a;
+    if(real)a=data[Math.min(data.length-1,Math.floor(Math.pow(f,1.4)*data.length*.7))]/255;
+    else a=playing?(.35+.25*Math.sin(t*2.1+k*.55)+.2*Math.sin(t*3.3+k*1.3)+.15*Math.sin(t*1.1-k*.25))*(1-f*.55):0;
+    a=Math.max(0,Math.min(1,a));if(k<4)bass+=a/4/ (N/2>0?1:1);
+    const h=Math.max(6,a*H*.95),x=i*bw+gap/2,y=(H-h)/2,w=bw-gap;
+    cx.beginPath();cx.roundRect(x,y,w,h,w/2);cx.fill();
+  }
+  level+=(((real?bass/ (N/2) *3.2:(playing?.5+.4*Math.sin(t*3.1):0)))-level)*.25;
+  vis.style.setProperty('--pulse',(1+Math.max(0,Math.min(.14,level*.14))).toFixed(3));
+  raf=requestAnimationFrame(frame);
+}
+function sync(){
+  const on=audioOnly();
+  if(on){vis.querySelector('.vt').textContent=bn(String(cur||'').split(/[?#]/)[0])||'';const m=String(cur||'').split(/[?#]/)[0].match(/\.([a-z0-9]{2,4})$/i);vis.querySelector('.vf').textContent=m?m[1].toUpperCase():'AUDIO'}
+  vis.classList.toggle('on',on);
+  if(on&&!raf)raf=requestAnimationFrame(frame);
+}
+['loadeddata','loadedmetadata','playing','emptied','pause','play'].forEach(ev=>v.addEventListener(ev,()=>setTimeout(sync,60)));
+}
+
+/* ---------- update progress screen: shown while an update downloads and installs ---------- */
+{const st=document.createElement('style');st.textContent=`
+#upd{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;background:rgba(6,8,30,.72);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+#upd.on{display:flex}
+#upd .uc{width:420px;max-width:90vw;border-radius:22px;padding:30px 30px 26px;text-align:center;color:#e8eaff;background:linear-gradient(160deg,#171a52,#0d0e2e);box-shadow:0 24px 70px rgba(0,0,0,.6),0 0 0 1px rgba(150,160,255,.25)}
+#upd .ul{position:relative;width:96px;height:96px;margin:0 auto 18px;display:grid;place-items:center}
+#upd .ul img{width:58px;position:relative;z-index:1;animation:updBeat 1.6s ease-in-out infinite;filter:drop-shadow(0 0 12px rgba(60,200,255,.5))}
+#upd .ul i{position:absolute;inset:0;border-radius:50%;border:3px solid rgba(150,160,255,.18);border-top-color:#25b8d6;border-right-color:#8a5ae8;animation:updSpin 1.1s linear infinite}
+#upd h3{font-size:17px;font-weight:700;margin:0 0 6px}
+#upd p{font-size:13px;color:#9ea2cf;margin:0;min-height:18px}
+#upd .ub{height:8px;border-radius:999px;background:rgba(255,255,255,.1);overflow:hidden;margin:20px 0 10px;position:relative}
+#upd .ub b{display:block;height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,#25b8d6,#6a4fe0 70%,#b04be8);transition:width .25s}
+#upd .ub b::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);transform:translateX(-100%);animation:updShine 1.4s linear infinite}
+#upd.ins .ub b{width:40%!important;position:absolute;animation:updSlide 1.3s ease-in-out infinite}
+#upd .us{font-size:12px;color:#7478ad;min-height:16px}
+@keyframes updSpin{to{transform:rotate(360deg)}}@keyframes updBeat{50%{transform:scale(1.1)}}
+@keyframes updShine{to{transform:translateX(100%)}}@keyframes updSlide{0%{left:-40%}100%{left:100%}}`;
+document.head.appendChild(st);
+const u=document.createElement('div');u.id='upd';u.innerHTML='<div class="uc"><div class="ul"><i></i><img src="logo.png" alt=""></div><h3></h3><p></p><div class="ub"><b></b></div><div class="us"></div></div>';document.body.appendChild(u);
+const q=s=>u.querySelector(s),mb=n=>(n/1048576).toFixed(1);
+desk.onUpdate(s=>{
+  if(!s||s.stage==='error'){u.classList.remove('on','ins');return}
+  u.classList.add('on');
+  if(s.stage==='installing'){u.classList.add('ins');q('h3').textContent='Installing the update';q('p').textContent='NixPlayer will close and open again in a moment.';q('.us').textContent='Please do not turn off your computer.';return}
+  u.classList.remove('ins');
+  const pc=Math.max(0,Math.min(100,s.percent||0));
+  q('h3').textContent='Downloading NixPlayer '+(s.version||'');
+  q('p').textContent='Please wait, this takes a moment.';
+  q('b').style.width=pc+'%';
+  q('.us').textContent=s.total?Math.round(pc)+'%  ·  '+mb(s.transferred)+' / '+mb(s.total)+' MB'+(s.bps?'  ·  '+mb(s.bps)+' MB/s':''):'Starting the download…';
+});}
+
 /* taskbar thumbnail buttons: previous / play-pause / next */
 {const ts=()=>desk.thumbState(v.paused,!!v.currentSrc);['play','pause','loadedmetadata','emptied','ended'].forEach(e=>v.addEventListener(e,ts));ts();
  /* progress along the taskbar button, updated at most twice a second */
