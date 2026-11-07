@@ -96,7 +96,7 @@
 !macroend
 
 !macro npAssoc EXT
-  WriteRegStr SHELL_CONTEXT "Software\${NP_ID}\Capabilities\FileAssociations" ".${EXT}" "NixPlayer.Media"
+  WriteRegStr SHELL_CONTEXT "Software\${NP_ID}\Capabilities\FileAssociations" ".${EXT}" "NixPlayer.${EXT}"
 !macroend
 
 ; ---- register NixPlayer in Windows "Default apps" -------------------------------------
