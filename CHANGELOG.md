@@ -17,6 +17,8 @@ Older notes (1.0 to 1.6.0) are at the bottom of this file.
 - Installer: Browse now suggests a `NixPlayer` folder in the chosen location.
 - "Set NixPlayer as the default player" is no longer ticked by default, so Windows Default apps does not open after install unless you choose it.
 
+## [1.7.2] - 2026-11-07
+
 ### Changed
 - **New NixPlayer logo** everywhere: top bar, home screen, window and taskbar icon, desktop shortcut, the installer and uninstaller (icon, side image and header image).
 - **File icons in Windows Explorer:** every format now has its own icon, the logo without a background and the format name beside it (MP4, MKV, MP3 and so on). On files that show a video thumbnail, Windows adds the small logo in the corner. Icons are refreshed when NixPlayer is installed or updated.

@@ -22,6 +22,26 @@
 
 ---
 
+## Icons, installer and thumbnails
+
+The same logo is used everywhere, from the setup file to your media files.
+
+**Setup file and app icon**
+
+<img src="docs/exe-icon.png" width="760" alt="NixPlayer-Setup.exe icon in Windows Explorer">
+
+| Welcome | Installing |
+|:---:|:---:|
+| <img src="docs/installer-welcome.png" width="360"> | <img src="docs/installer-install.png" width="360"> |
+
+**File icons in Windows Explorer**
+
+Every format has its own icon: the logo without a background, with the format name beside it (MKV, MP4, MP3 and more). When Windows shows a video thumbnail, the small NixPlayer logo appears in the corner of it.
+
+<img src="docs/file-icons.png" width="760" alt="NixPlayer file icons with and without thumbnails">
+
+---
+
 ## Why NixPlayer?
 
 | | |
@@ -48,7 +68,6 @@ Learn a language while you watch, without leaving the video.
 - **Right-click** a word to open a card that stays on screen, with **definitions, examples, synonyms and antonyms**.
 - Choose what a left or right click does: show the card, or search in your browser (Google, Google Translate, Bing, DuckDuckGo, Cambridge Dictionary or your own address).
 - Optional: pause the video while a meaning is shown.
-
 ### 🎨 Themes and accent colours
 - **Dark · Light · Glass · System** (System follows Windows). Glass makes the window see-through, and it is real acrylic on Windows 11. A slider sets how frosted it is.
 - Pick an accent colour from the presets or any custom colour. It is used for the progress bar, highlights and switches.
