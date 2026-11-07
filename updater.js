@@ -9,9 +9,7 @@ const INFO=PKG.nixplayer||{};
 const CHECK_EVERY=6*60*60*1000; // background check interval
 const FIRST_CHECK=10*1000;      // first background check after start
 
-let getWin=()=>null,au=null,busy=false,downloading=false,manual=false,updVer='';
-// tells the player window what the update is doing (it shows the progress screen)
-const push=st=>{try{const w=getWin();if(w&&!w.isDestroyed())w.webContents.send('upd:state',Object.assign({version:updVer},st))}catch(_){}};
+let getWin=()=>null,au=null,busy=false,downloading=false,manual=false;
 const asked=new Set();          // versions the user already answered "Later" to (this session)
 
 // electron-updater is loaded lazily and only touched in the installed app
@@ -23,18 +21,16 @@ function updater(){
   autoUpdater.allowPrerelease=false;
   autoUpdater.on('update-available',onAvailable);
   autoUpdater.on('update-not-available',()=>{const m=manual;done();if(m)say('info',"You're up to date",'NixPlayer '+app.getVersion()+' is the newest version.')});
-  autoUpdater.on('download-progress',p=>{const w=getWin();if(w&&!w.isDestroyed())w.setProgressBar(Math.max(0,Math.min(1,(p.percent||0)/100)));push({stage:'downloading',percent:p.percent||0,transferred:p.transferred||0,total:p.total||0,bps:p.bytesPerSecond||0})});
+  autoUpdater.on('download-progress',p=>{const w=getWin();if(w&&!w.isDestroyed())w.setProgressBar(Math.max(0,Math.min(1,(p.percent||0)/100)))});
   autoUpdater.on('update-downloaded',()=>{
     const w=getWin();if(w&&!w.isDestroyed())w.setProgressBar(-1);
     done();
-    push({stage:'installing'});
     // isSilent=true: no installer window, same install folder; isForceRunAfter=true: reopen NixPlayer
-    // (a short pause so the "Installing" screen is seen before the window closes)
-    setTimeout(()=>autoUpdater.quitAndInstall(true,true),2200);
+    setImmediate(()=>autoUpdater.quitAndInstall(true,true));
   });
   autoUpdater.on('error',err=>{
     const w=getWin();if(w&&!w.isDestroyed())w.setProgressBar(-1);
-    const was=downloading||manual;done();push({stage:'error'});
+    const was=downloading||manual;done();
     if(was)say('warning','Update failed','NixPlayer could not update right now.\n\n'+String(err&&err.message||err).split('\n')[0]+'\n\nCheck your internet connection and try again later.');
   });
   return au=autoUpdater;
@@ -108,7 +104,7 @@ async function onAvailable(info){
     buttons:['Update now','Later'],defaultId:0,cancelId:1,noLink:true};
   const r=await (w&&!w.isDestroyed()?dialog.showMessageBox(w,o):dialog.showMessageBox(o));
   if(r.response!==0){asked.add(v);done();return}
-  downloading=true;updVer=v||'';push({stage:'downloading',percent:0,transferred:0,total:0,bps:0});
+  downloading=true;
   try{await updater().downloadUpdate()}catch(_){/* 'error' event shows the message */}
 }
 

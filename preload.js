@@ -49,6 +49,5 @@ contextBridge.exposeInMainWorld('desk',{
   docText:n=>call('app:docText',n),
   openUrl:u=>call('app:open',u),
   pathOf:f=>webUtils.getPathForFile(f),
-  onUpdate:cb=>ipcRenderer.on('upd:state',(_e,s)=>cb(s)),
   onOpen:cb=>ipcRenderer.on('open-files',(_e,files)=>cb(files))
 });
