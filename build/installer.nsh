@@ -19,9 +19,15 @@
   Var npStart
 !endif
 
-; every option is ticked by default; the user can untick any of them
+; Gives the folder page a default folder name, so Browse adds "\NixPlayer" to the folder the user picks
+; (the real default folder is still chosen by electron-builder at run time).
+!macro customHeader
+  InstallDir "$LOCALAPPDATA\Programs\NixPlayer"
+!macroend
+
+; shortcuts are ticked by default; "set as default player" is opt-in (it opens the Windows Default apps page after the install)
 !macro customInit
-  StrCpy $npSetDefault ${BST_CHECKED}
+  StrCpy $npSetDefault ${BST_UNCHECKED}
   StrCpy $npDesktop ${BST_CHECKED}
   StrCpy $npStart ${BST_CHECKED}
 !macroend
@@ -96,7 +102,7 @@
 !macroend
 
 !macro npAssoc EXT
-  WriteRegStr SHELL_CONTEXT "Software\${NP_ID}\Capabilities\FileAssociations" ".${EXT}" "NixPlayer.Media"
+  WriteRegStr SHELL_CONTEXT "Software\${NP_ID}\Capabilities\FileAssociations" ".${EXT}" "NixPlayer.${EXT}"
 !macroend
 
 ; ---- register NixPlayer in Windows "Default apps" -------------------------------------
@@ -125,6 +131,8 @@
   !insertmacro npAssoc wav
   !insertmacro npAssoc ogg
   !insertmacro npAssoc m4a
+  !insertmacro npAssoc srt
+  !insertmacro npAssoc vtt
   WriteRegStr SHELL_CONTEXT "Software\RegisteredApplications" "${NP_ID}" "Software\${NP_ID}\Capabilities"
   System::Call 'shell32::SHChangeNotify(i 0x08000000, i 0, p 0, p 0)'
 !macroend
