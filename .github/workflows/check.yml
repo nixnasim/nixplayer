@@ -15,6 +15,6 @@ jobs:
           node-version: 22
       - name: Syntax check every JavaScript file
         run: |
-          for f in main.js preload.js av.js webproxy.js updater.js renderer/*.js; do
+          for f in main.js preload.js av.js webproxy.js updater.js edition.js renderer/*.js; do
             node --check "$f" || exit 1
           done

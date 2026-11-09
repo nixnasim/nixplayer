@@ -57,3 +57,36 @@ individuals, needs an MSIX/AppX build and the store's review), or a code-signing
 
 Set your link in `package.json` → `"nixplayer": { "donateUrl": "https://..." }`.
 The "Donate" button appears in Settings → About only when this is filled. Also edit `.github/FUNDING.yml` (shows a Sponsor button on the repo).
+
+## Microsoft Store edition (MSIX)
+
+One repo, two editions, one version number. Nothing is duplicated.
+
+| | GitHub edition | Microsoft Store edition |
+|---|---|---|
+| Where people get it | GitHub Releases (the `.exe` installer) | Microsoft Store |
+| Built by | workflow **Release** (NSIS installer) | workflow **Store package** (`.appx`) |
+| Updates | in-app updater (GitHub Releases) | the Store |
+| yt-dlp (YouTube etc.) | yes | no (Store policy: no downloading of executable code) |
+| Publisher shown in Windows | `author` in package.json (NixNasim) | PublisherDisplayName (NixNasim) |
+
+The Store edition is the same code. It detects itself (`edition.js`: `process.windowsStore`), so it has no self-updater and never
+downloads or runs yt-dlp. Settings are separate between the two editions; both can be installed side by side.
+
+### Every release (both editions)
+1. Change the code, update CHANGELOG.md, then `npm version patch` and `git push --follow-tags` (as above).
+2. The **Release** workflow publishes the `.exe` on GitHub by itself.
+3. The **Store package** workflow also starts by itself on the same tag. When it is green, open it and download the
+   artifact `nixplayer-store-package` (the `.appx`). The artifact `appx-manifest` is the package manifest, for checking.
+4. Partner Center -> NixPlayer -> Start submission -> Packages -> upload the `.appx` -> fill "What's new" from CHANGELOG -> Submit.
+
+The identity values in `package.json` -> `build.appx` come from Partner Center -> Product management -> Product identity.
+They must match character for character; the workflow stops with an error if they do not.
+
+### Testing
+- The `.appx` is NOT signed (the Store signs it after certification), so Windows will not install it directly.
+- Try the Store behaviour from source: `set NIXPLAYER_STORE=1` then `npm start`
+  (no update button, no yt-dlp, no external download links).
+- Test the real installer edition with `npm run dist` (or the GitHub release).
+- Partner Center runs its own automated checks on upload. If certification fails you get a report, fix it and resubmit:
+  a rejection costs nothing.

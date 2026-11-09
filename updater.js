@@ -4,6 +4,7 @@
 const {app,dialog,shell,ipcMain}=require('electron');
 const path=require('path'),fs=require('fs'),https=require('https');
 const PKG=require('./package.json');
+const {STORE}=require('./edition.js'); // Store edition: Microsoft Store delivers the updates
 
 const INFO=PKG.nixplayer||{};
 const CHECK_EVERY=6*60*60*1000; // background check interval
@@ -91,9 +92,9 @@ function whatsNew(){
     const notes=changelogOf(cur);if(!notes)return;
     setTimeout(async()=>{
       const w=getWin(),o={type:'info',title:'NixPlayer',message:"What's new in NixPlayer "+cur,detail:clip(notes,1800),
-        buttons:['OK',INFO.homepage?'All release notes':'Close'],defaultId:0,cancelId:0,noLink:true};
+        buttons:['OK',(INFO.homepage&&!STORE)?'All release notes':'Close'],defaultId:0,cancelId:0,noLink:true};
       const r=await (w&&!w.isDestroyed()?dialog.showMessageBox(w,o):dialog.showMessageBox(o));
-      if(r.response===1&&INFO.homepage)shell.openExternal(INFO.homepage.replace(/\/+$/,'')+'/releases');
+      if(r.response===1&&INFO.homepage&&!STORE)shell.openExternal(INFO.homepage.replace(/\/+$/,'')+'/releases');
     },2500);
   }catch(_){}
 }
@@ -114,6 +115,10 @@ async function onAvailable(info){
 
 // manual=true: the user pressed "Check for updates" (always answer); false: quiet background check
 async function check(isManual){
+  if(STORE){
+    if(isManual)say('info','Updates','Updates for this edition of NixPlayer are delivered by the Microsoft Store.');
+    return{ok:false,reason:'store'};
+  }
   if(!app.isPackaged){
     if(isManual)say('info','Updates','Updates work in the installed NixPlayer (not when started with "npm start").');
     return{ok:false,reason:'dev'};
@@ -129,17 +134,21 @@ function init(winGetter){
   getWin=winGetter||getWin;
   if(!app.isPackaged)return;
   whatsNew();
+  if(STORE)return; // no self-updater in the Store edition
   setTimeout(()=>check(false),FIRST_CHECK);
   setInterval(()=>check(false),CHECK_EVERY).unref();
 }
 
 /* ---------- IPC used by Settings -> About ---------- */
 ipcMain.handle('app:info',()=>({
-  version:app.getVersion(),packaged:app.isPackaged,
-  donateUrl:INFO.donateUrl||'',homepage:INFO.homepage||'',author:PKG.author||''
+  version:app.getVersion(),packaged:app.isPackaged,store:STORE,
+  donateUrl:INFO.donateUrl||'',homepage:INFO.homepage||'',author:PKG.author||'',
+  issuesUrl:INFO.issuesUrl||'',privacyUrl:INFO.privacyUrl||'',
+  electron:process.versions.electron,chrome:process.versions.chrome,
+  os:require('os').release(),arch:process.arch,locale:app.getLocale()
 }));
 ipcMain.handle('upd:check',()=>check(true));
-const DOCS={license:'LICENSE.txt',notices:'THIRD-PARTY-NOTICES.md'};
+const DOCS={license:'LICENSE.txt',notices:'THIRD-PARTY-NOTICES.md',ffmpeg:'FFMPEG-LICENSE.txt'};
 const docPath=f=>app.isPackaged?path.join(process.resourcesPath,f):path.join(__dirname,f==='LICENSE.txt'?'LICENSE':f);
 ipcMain.handle('app:doc',async(e,name)=>{
   const f=DOCS[name];if(!f)return false;

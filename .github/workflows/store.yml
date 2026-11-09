@@ -1,0 +1,46 @@
+# Builds the Microsoft Store package (.appx / MSIX).
+# Runs by itself when you push a version tag (v1.8.0 ...), or by hand: Actions -> "Store package" -> Run workflow.
+# Download the artifact, then upload it in Partner Center (NixPlayer -> Start submission -> Packages).
+# The Store signs the package itself; nothing is published to GitHub Releases from here.
+name: Store package
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  appx:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build the MSIX package
+        run: npm run dist:store
+      - name: Check the package manifest against Partner Center
+        shell: pwsh
+        run: |
+          $pkg = Get-ChildItem dist -Filter *.appx | Select-Object -First 1
+          if (-not $pkg) { throw 'No .appx file was built' }
+          Copy-Item $pkg.FullName "$($pkg.FullName).zip"
+          Expand-Archive "$($pkg.FullName).zip" -DestinationPath dist/appx-contents -Force
+          Copy-Item dist/appx-contents/AppxManifest.xml dist/AppxManifest.xml
+          $m = Get-Content dist/AppxManifest.xml -Raw
+          Write-Host $m
+          if ($m -notmatch 'Name="NixNasim\.NixPlayer"') { throw 'Identity Name does not match Partner Center' }
+          if ($m -notmatch 'Publisher="CN=FC6D1112-3D26-446D-B9A5-D7F2741C8E79"') { throw 'Identity Publisher does not match Partner Center' }
+          if ($m -notmatch '<PublisherDisplayName>NixNasim</PublisherDisplayName>') { throw 'PublisherDisplayName does not match Partner Center' }
+          if ($m -notmatch 'windows\.fileTypeAssociation') { Write-Host '::warning::No file type associations in the manifest: double-clicking .mkv / .mp4 will not open NixPlayer. Tell the developer.' }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nixplayer-store-package
+          path: dist/*.appx
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: appx-manifest
+          path: dist/AppxManifest.xml

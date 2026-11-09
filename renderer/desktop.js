@@ -225,6 +225,8 @@ function saveResume(){
 /* ---------- opening files, playlist ---------- */
 function fail(msg){const e=$('#empty');e.style.display='flex';e.querySelector('.em').textContent=msg;setTimeout(renderHome,0)}
 const isWeb=p=>/^https?:\/\//i.test(p);
+let STORE=false; // Microsoft Store edition (no self-update, no yt-dlp)
+desk.appInfo().then(i=>{STORE=!!(i&&i.store)}).catch(()=>{});
 const WEB=new Map(); // link -> {title,src}  (session only; yt-dlp links expire)
 const label=p=>isWeb(p)?((WEB.get(p)||{}).title||p):bn(p);
 let pendingSeek=null;
@@ -698,7 +700,7 @@ function urlDlg(){
   ta.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();go()}};
   const box=el('div',{className:'dw uw'},[
     el('h3',{textContent:'Open link'}),ta,
-    el('small',{textContent:'Direct video / audio links (.mp4, .webm, .mp3 …) play right away. YouTube and other sites need yt-dlp installed. Enter = play.'}),
+    el('small',{textContent:STORE?'Direct video / audio links (.mp4, .webm, .mp3, .m3u8 …) play right away. Enter = play.':'Direct video / audio links (.mp4, .webm, .mp3 …) play right away. YouTube and other sites need yt-dlp installed. Enter = play.'}),
     el('div',{className:'ub'},[el('button',{textContent:'Cancel',onclick:closeDlg}),el('button',{className:'go',textContent:'Play',onclick:go})])]);
   const rc=HC.filter(x=>x.web).slice(0,5);
   if(rc.length){box.appendChild(el('h4',{textContent:'Recent links',style:'margin:12px 0 4px;color:var(--fg3);font-size:12px'}));
@@ -1081,13 +1083,13 @@ const TABS={
     let c=sec(box,'NixPlayer','info');
     note(c,'A simple desktop video player. Drop files on the window, press Ctrl+O, or use “Open with”. Press Ctrl+, for these settings.');
     note(c,'Plays whatever Chromium can decode: MP4 / MKV / WebM with H.264, VP9, AV1 and AAC / MP3 / Opus / FLAC. AC3 / E-AC3 / DTS audio, files with several audio tracks and text subtitles inside MKV are handled with the bundled ffmpeg (audio is re-encoded live, nothing is written next to your file). Picture-based subtitles (PGS / VobSub) are not supported.');
-    const cv=sec(box,'Version and updates','reset'),cs=sec(box,'Support and legal','info');
+    const cv=sec(box,'Version and updates','reset'),ch=sec(box,'Help and support','info'),cs=sec(box,'Support and legal','info');
     fact(cv,'Installed version','…');
     desk.appInfo().then(i=>{const x=cv.querySelector('.fx');if(x)x.textContent='NixPlayer '+i.version}).catch(()=>{});
-    ctl(cv,{t:'btn',l:'Check for updates',d:'NixPlayer also checks by itself. When an update is found, press “Update now”: it installs in the same place and opens again.',text:'Check now',ic:'reset',run:()=>desk.checkUpdate()});
+    if(!STORE)ctl(cv,{t:'btn',l:'Check for updates',d:'NixPlayer also checks by itself. When an update is found, press “Update now”: it installs in the same place and opens again.',text:'Check now',ic:'reset',run:()=>desk.checkUpdate()});
     const legal=i=>{ // donate / downloads rows show only when their link is set in package.json ("nixplayer" block)
-      if(i.donateUrl)ctl(cs,{t:'btn',l:'Support NixPlayer',d:'NixPlayer is free. A donation helps to keep it updated.',text:'Donate',ic:'link',run:()=>desk.openUrl(i.donateUrl)});
-      if(i.homepage)ctl(cs,{t:'btn',l:'Downloads and release notes',text:'Open page',ic:'url',run:()=>desk.openUrl(i.homepage)});
+      if(i.donateUrl&&!i.store)ctl(cs,{t:'btn',l:'Support NixPlayer',d:'NixPlayer is free. A donation helps to keep it updated.',text:'Donate',ic:'link',run:()=>desk.openUrl(i.donateUrl)});
+      if(i.homepage&&!i.store)ctl(cs,{t:'btn',l:'Downloads and release notes',text:'Open page',ic:'url',run:()=>desk.openUrl(i.homepage)});
       /* license / notices open right here in the page (no external file): the button shows / hides the text under its row */
       const doc=(l,d,n)=>{let pre=null;const b=ctl(cs,{t:'btn',l,d,text:'Show',ic:'info',run:async()=>{
         const row=b.closest('.row');
@@ -1098,8 +1100,31 @@ const TABS={
       }})};
       doc('License','Copyright © Nasimul Islam Nasim. Free to use.','license');
       doc('Third-party notices','Electron, ffmpeg, hls.js, Lucide icons and others.','notices');
+      doc('FFmpeg license','FFmpeg is licensed under the GPL. The license text and where to get the source code.','ffmpeg');
     };
     desk.appInfo().then(legal).catch(()=>legal({}));
+    /* Help and support: report a problem, copy diagnostic info, privacy policy, feedback. Nothing is sent automatically:
+       the GitHub page opens in the browser with the details filled in, and the person presses Submit there. */
+    const diag=i=>['NixPlayer '+i.version+(i.store?' (Microsoft Store edition)':' (installer edition)'),
+      'Electron '+i.electron+' / Chromium '+i.chrome,'Windows '+i.os+' ('+i.arch+')','Language: '+i.locale].join('\n');
+    const issue=(i,title,intro)=>{
+      const body=intro+'\n\n\n---\n'+diag(i);
+      return i.issuesUrl.replace(/\/+$/,'')+'/new?title='+encodeURIComponent(title)+'&body='+encodeURIComponent(body);
+    };
+    const copy=async t=>{
+      try{await navigator.clipboard.writeText(t);return true}catch(_){}
+      try{const a=el('textarea',{value:t});a.style.cssText='position:fixed;opacity:0';document.body.appendChild(a);a.select();const ok=document.execCommand('copy');a.remove();return ok}catch(_){return false}
+    };
+    const help=i=>{
+      if(i.issuesUrl)ctl(ch,{t:'btn',l:'Report a problem',d:'Opens a new issue on GitHub with your version and Windows details filled in. Nothing is sent until you press Submit there.',text:'Report',ic:'link',
+        run:()=>desk.openUrl(issue(i,'Problem: ','**What happened?**\n\n\n**What did you expect?**\n\n\n**The file type or link (if it matters):**\n'))});
+      const b=ctl(ch,{t:'btn',l:'Copy diagnostic info',d:'Copies the version, edition and system details, so you can paste them into a message.',text:'Copy',ic:'info',
+        run:async()=>{const ok=await copy(diag(i));b.lastChild.textContent=ok?'Copied':'Could not copy';setTimeout(()=>{b.lastChild.textContent='Copy'},1800)}});
+      if(i.privacyUrl)ctl(ch,{t:'btn',l:'Privacy policy',d:'What stays on your computer and what is sent when you use subtitle search, translation or a dictionary.',text:'Open',ic:'url',run:()=>desk.openUrl(i.privacyUrl)});
+      if(i.issuesUrl)ctl(ch,{t:'btn',l:'Send feedback',d:'Tell us what you like or what could be better.',text:'Send',ic:'link',
+        run:()=>desk.openUrl(issue(i,'Feedback: ','**What do you like, or what could be better?**\n'))});
+    };
+    desk.appInfo().then(help).catch(()=>{});
     c=sec(box,'Maintenance','reset');
     ctl(c,{t:'btn',l:'Reset all settings',d:'Watch history, bookmarks and resume positions are kept.',text:'Reset',ic:'reset',danger:true,run:async()=>{if(confirm('Reset all NixPlayer settings to their defaults?')){try{localStorage.removeItem('np')}catch(e){}try{window.subClearAll&&await subClearAll()}catch(e){}location.reload()}}});
   }},

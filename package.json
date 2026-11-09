@@ -1,19 +1,23 @@
 {
   "name": "nixplayer",
-  "version": "1.7.4",
+  "version": "1.8.0",
   "description": "NixPlayer - a simple desktop video and audio player with a clean custom top bar",
   "main": "main.js",
-  "author": "Nasimul Islam Nasim",
+  "author": "NixNasim",
   "nixplayer": {
     "donateUrl": "",
-    "homepage": "https://github.com/nixnasim/nixplayer"
+    "homepage": "https://github.com/nixnasim/nixplayer",
+    "issuesUrl": "https://github.com/nixnasim/nixplayer/issues",
+    "privacyUrl": "https://github.com/nixnasim/nixplayer/blob/main/docs/PRIVACY.md"
   },
   "license": "SEE LICENSE IN LICENSE",
   "scripts": {
     "start": "electron .",
     "dist": "electron-builder --win",
     "pack": "electron-builder --dir",
-    "release": "electron-builder --win --publish always"
+    "release": "electron-builder --win --publish always",
+    "dist:store": "electron-builder --win appx --publish never",
+    "pack:store": "electron-builder --win appx --dir --publish never"
   },
   "devDependencies": {
     "electron": "^45.1.0",
@@ -28,6 +32,7 @@
       "av.js",
       "webproxy.js",
       "updater.js",
+      "edition.js",
       "renderer/**",
       "build/icon.png"
     ],
@@ -177,6 +182,10 @@
       {
         "from": "CHANGELOG.md",
         "to": "CHANGELOG.md"
+      },
+      {
+        "from": "FFMPEG-LICENSE.txt",
+        "to": "FFMPEG-LICENSE.txt"
       }
     ],
     "publish": [
@@ -187,7 +196,20 @@
         "releaseType": "release"
       }
     ],
-    "copyright": "Copyright © 2026 Nasimul Islam Nasim"
+    "copyright": "Copyright © 2026 Nasimul Islam Nasim",
+    "appx": {
+      "applicationId": "NixPlayer",
+      "identityName": "NixNasim.NixPlayer",
+      "publisher": "CN=FC6D1112-3D26-446D-B9A5-D7F2741C8E79",
+      "publisherDisplayName": "NixNasim",
+      "displayName": "NixPlayer",
+      "backgroundColor": "#1b1b1b",
+      "showNameOnTiles": true,
+      "languages": [
+        "en-US"
+      ],
+      "artifactName": "NixPlayer-Store-${version}.${ext}"
+    }
   },
   "dependencies": {
     "electron-updater": "^6.8.11",

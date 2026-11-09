@@ -136,6 +136,7 @@ function webHdr(url,extra){
   return h;
 }
 const regWeb=(url,headers)=>WP.register(url,webHdr(url,headers)); // async: returns http://127.0.0.1:<port>/s/<id>
+const {STORE}=require('./edition.js'); // Microsoft Store edition: no yt-dlp download / run, no self-update
 const YT=process.platform==='win32'?'yt-dlp.exe':'yt-dlp';
 let HLSHDR=null; // request headers for the stream that is playing through hls.js
 // yt-dlp is looked up in NixPlayer's own folder (auto-downloaded), next to the app, in ./bin, then on PATH
@@ -145,6 +146,7 @@ const YT_ASSET={win32:'yt-dlp.exe',darwin:'yt-dlp_macos',linux:process.arch==='a
 let ytUpdated=false,ytDl=null;
 // downloads the latest yt-dlp into NixPlayer's own folder (first use, or when a site stopped working)
 function getYt(){
+  if(STORE)return Promise.resolve(false); // never download executable code in the Store edition
   if(ytDl)return ytDl;
   ytDl=(async()=>{
     try{
@@ -212,6 +214,7 @@ ipcMain.handle('net:resolve',async(e,url)=>{
     }catch(_){} // slow or unreachable: still try to play, the player retries
     return done({ok:true,src:await regWeb(url),title:nameOf()});
   }
+  if(STORE)return{ok:false,error:'This link is not a direct video or audio file. This edition of NixPlayer plays direct links (.mp4, .webm, .mp3, .m3u8 …); pages of streaming sites are not supported.'};
   const y=await runYt(url);
   if(y.err==='missing')return{ok:false,error:'Could not download yt-dlp (needed for YouTube and other sites). Check your internet connection, or put yt-dlp.exe next to NixPlayer.exe, then try again.'};
   if(y.err)return{ok:false,error:'yt-dlp: '+y.err};

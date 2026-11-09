@@ -5,6 +5,17 @@ Older notes (1.0 to 1.6.0) are at the bottom of this file.
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-11-09
+
+### Added
+- **Microsoft Store edition.** The same NixPlayer is now also available from the Microsoft Store; the Store updates it.
+- **Help and support** in Settings → About: Report a problem (opens a GitHub issue with your version filled in), Copy diagnostic info, Privacy policy and Send feedback.
+- **FFmpeg license** page in Settings → About, with the license text and where to get the source code.
+- A privacy policy (`docs/PRIVACY.md`).
+
+### Changed
+- The publisher name shown by Windows is now NixNasim.
+
 ## [1.7.4] - 2026-11-07
 
 ### Fixed
