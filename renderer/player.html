@@ -483,11 +483,14 @@ async function rec(){
  if(mr){mr.stop();return}
  if(!v.src)return hud('Open a video first','warn');
  let s;try{s=v.captureStream?v.captureStream():v.mozCaptureStream()}catch(e){return hud('Recording is not supported','warn')}
+ let tapDone=null;
+ try{const x=window.deskRecAudio&&deskRecAudio();if(x&&x.tracks&&x.tracks.length){s=new MediaStream([...s.getVideoTracks(),...x.tracks]);tapDone=x.done}}catch(e){} // the sound of the player can come through Web Audio / ffmpeg: take it from there
  const mt=['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'].find(t=>window.MediaRecorder&&MediaRecorder.isTypeSupported(t));
  try{mr=new MediaRecorder(s,mt?{mimeType:mt}:{})}catch(e){mr=null;return hud('Recording is not supported','warn')}
  rch=[];mr.ondataavailable=e=>{if(e.data.size)rch.push(e.data)};
  mr.onstop=async()=>{
   clearInterval(rI);$('#rec').style.display='none';bt.rec.classList.remove('recording');
+  if(tapDone){try{tapDone()}catch(e){}}
   const b=new Blob(rch,{type:'video/webm'});mr=null;rch=[];
   const file=(name||'record').replace(/\.[^.]+$/,'')+' REC '+new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')+'.webm';
   if(window.deskSaveRec)return deskSaveRec(b,file);

@@ -5,6 +5,19 @@ Older notes (1.0 to 1.6.0) are at the bottom of this file.
 
 ## [Unreleased]
 
+## [1.8.1] - 2026-11-12
+
+### Fixed
+- **Microsoft Store edition:** file icons now show the format label (MP4, MKV, SRT ...) like the installer edition, and Explorer calls them "NixPlayer MP4 File". The app icon no longer has a black square behind it in the taskbar, in Open with and in Start.
+- **Home screen:** the logo and format label of a video without a picture are now centred in the card.
+- **Recordings now have sound.** The sound was missing when the sound of the file came through the volume boost or from the ffmpeg audio stream (for example files with several audio tracks or AC3 / DTS sound).
+- **Recordings can be dragged on the timeline.** A recording is repaired once when it is saved (no re-encoding), so it has a length and can be sought. Recordings made by older versions get their length when they are opened.
+- **Timeline preview of HEVC videos** (for example security-camera files): the small picture above the timeline now shows frames of that video, cut by ffmpeg, instead of the last picture of the previous video.
+- A file that cannot be played now says why: it names the video format (for example HEVC / H.265) instead of a general message, and a file that never starts says so after 10 seconds.
+
+### Added
+- **Files this PC cannot decode play within seconds.** HEVC / H.265 video (for example from security cameras) is decoded on the graphics card where the PC has one that can do it. Where it cannot, NixPlayer starts a stream (H.264 + AAC) made by ffmpeg while you watch and the timeline fills as it goes; a finished stream is kept for 14 days.
+
 ## [1.8.0] - 2026-11-09
 
 ### Added

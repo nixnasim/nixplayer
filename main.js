@@ -11,6 +11,7 @@ const EXT=MEDIA.source.match(/\((.*)\)/)[1].split('|');
 
 // multiple audio tracks (audio track selector) + autoplay without a click
 app.commandLine.appendSwitch('enable-blink-features','AudioVideoTracks');
+app.commandLine.appendSwitch('enable-features','PlatformHEVCDecoderSupport'); // HEVC / H.265 on the graphics card, where the PC has one that can do it
 app.commandLine.appendSwitch('autoplay-policy','no-user-gesture-required');
 // keep playing when the window is minimized or covered by another window (Chromium otherwise treats it as "hidden" and may pause the video)
 app.commandLine.appendSwitch('disable-features','CalculateNativeWinOcclusion,BackgroundVideoPauseOptimization,BackgroundVideoTrackOptimization');
@@ -75,6 +76,7 @@ else{
   // opened from outside (Explorer, "Open with", a link, the app icon again): always a NEW window; opening things from inside a player window stays in that window
   app.on('second-instance',(e,argv)=>{createWindow(pickArgs(argv)).focus()});
   app.whenReady().then(()=>{
+    convClean();
     protocol.handle('media',async req=>{
       try{
         const p=decodeURIComponent(new URL(req.url).pathname.slice(1));
@@ -234,7 +236,7 @@ ipcMain.handle('av:probe',(e,p)=>okMedia(p)?AV.probe(p):{ok:false});
 ipcMain.handle('av:sub',(e,p,i)=>okMedia(p)?AV.extractSub(p,i|0):null);
 ipcMain.handle('av:subLive',(e,p,i,ss)=>okMedia(p)?AV.subLive(p,i|0,+ss||0,m=>{if(!e.sender.isDestroyed())e.sender.send('sub:chunk',m)}):0);
 ipcMain.handle('av:subStop',(e,id)=>AV.subStop(id));
-ipcMain.handle('av:thumb',(e,p,t)=>okMedia(p)&&WP.isProxy(p)?AV.thumb(p,+t||0):null);
+ipcMain.handle('av:thumb',(e,p,t)=>okMedia(p)?AV.thumb(p,+t||0):null); // online files and local files (preview frames cut by ffmpeg)
 ipcMain.handle('av:audio',(e,p,i,ss)=>okMedia(p)?AV.audioUrl(p,i|0,ss):null);
 
 
@@ -456,8 +458,37 @@ function saveUnique(dir,name,buf){
 ipcMain.handle('shot:save',(e,dataUrl,dir,name)=>{
   try{return saveUnique(dir||path.join(app.getPath('pictures'),'NixPlayer'),name||'shot.png',Buffer.from(dataUrl.split(',')[1],'base64'))}catch(_){return null}
 });
-ipcMain.handle('rec:save',(e,buf,dir,name)=>{
-  try{return saveUnique(dir||path.join(app.getPath('videos'),'NixPlayer'),name||'record.webm',Buffer.from(buf))}catch(_){return null}
+/* playable copies of files this PC cannot decode (see av.js convert): kept in the app's data folder, reused next time, cleaned up after 14 days / above 4 GB */
+const convDir=()=>path.join(app.getPath('userData'),'converted');
+const dirSize=f=>{let t=0;try{const st=fs.statSync(f);if(!st.isDirectory())return st.size;for(const n of fs.readdirSync(f))t+=dirSize(path.join(f,n))}catch(_){}return t};
+const readText=f=>{try{return fs.readFileSync(f,'utf8')}catch(_){return ''}};
+const convClean=()=>{
+  try{
+    const d=convDir();if(!fs.existsSync(d))return;
+    const now=Date.now(),rm=x=>{try{fs.rmSync(x.f,{recursive:true,force:true})}catch(_){}};
+    let L=fs.readdirSync(d).map(n=>{const f=path.join(d,n),st=fs.statSync(f);return{f,n,t:st.mtimeMs,s:dirSize(f),hls:st.isDirectory()}});
+    L=L.filter(x=>{ // unfinished pieces, and anything older than 14 days, go
+      const bad=/\.part\.mp4$/.test(x.n)||now-x.t>14*864e5||(x.hls&&!/#EXT-X-ENDLIST/.test(readText(path.join(x.f,'index.m3u8'))));
+      if(bad)rm(x);return !bad;
+    });
+    let tot=L.reduce((a,x)=>a+x.s,0);
+    for(const x of L.sort((a,b)=>a.t-b.t)){if(tot<=4e9)break;rm(x);tot-=x.s}
+  }catch(_){}
+};
+/* "play it now": a stream (H.264 + AAC) that ffmpeg makes while the file is watched */
+ipcMain.handle('hls:start',async(e,p)=>{
+  if(!okMedia(p)||WP.isProxy(p))return{ok:false,error:'Only files on this PC can be streamed'};
+  try{fs.mkdirSync(convDir(),{recursive:true});const info=await AV.probe(p);return await AV.hlsStart(p,info,convDir())}
+  catch(err){return{ok:false,error:String((err&&err.message)||err)}}
+});
+ipcMain.handle('hls:stop',(e,p)=>{try{if(okMedia(p))AV.hlsStop(p)}catch(_){}return true});
+app.on('before-quit',()=>{try{AV.hlsStopAll()}catch(_){}});
+ipcMain.handle('rec:save',async(e,buf,dir,name)=>{
+  try{
+    const out=saveUnique(dir||path.join(app.getPath('videos'),'NixPlayer'),name||'record.webm',Buffer.from(buf));
+    if(out)await AV.fixWebm(out); // adds the length and the seek table, so the recording can be dragged on the timeline
+    return out;
+  }catch(_){return null}
 });
 ipcMain.handle('shell:reveal',(e,p)=>shell.showItemInFolder(p));
 

@@ -34,6 +34,8 @@ contextBridge.exposeInMainWorld('desk',{
   subSave:(t,o)=>call('subs:save',t,o),
   subWrite:(t,o)=>call('subs:write',t,o),
   probe:p=>call('av:probe',p),
+  hlsStart:p=>call('hls:start',p),
+  hlsStop:p=>call('hls:stop',p),
   subExtract:(p,i)=>call('av:sub',p,i),
   subLive:(p,i,ss)=>call('av:subLive',p,i,ss),
   subStop:id=>call('av:subStop',id),

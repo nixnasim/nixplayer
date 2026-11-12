@@ -29,7 +29,26 @@ jobs:
             git tag "v$V"
             git push origin "v$V"
           fi
-      - run: npm ci
+      - name: Install dependencies (retries; uses a mirror if GitHub downloads keep failing)
+        # ffmpeg-static downloads ffmpeg.exe from GitHub Releases while installing, and that download sometimes
+        # answers 504. Try a few times, then try a mirror before giving up.
+        shell: pwsh
+        run: |
+          $ok = $false
+          foreach ($i in 1..4) {
+            npm ci
+            if ($LASTEXITCODE -eq 0) { $ok = $true; break }
+            Write-Host "npm ci failed (attempt $i of 4). Waiting before the next try..."
+            Remove-Item node_modules -Recurse -Force -ErrorAction SilentlyContinue
+            Start-Sleep -Seconds (30 * $i)
+          }
+          if (-not $ok) {
+            Write-Host 'Trying the npmmirror mirror for the ffmpeg download'
+            Remove-Item node_modules -Recurse -Force -ErrorAction SilentlyContinue
+            $env:FFMPEG_BINARIES_URL = 'https://cdn.npmmirror.com/binaries/ffmpeg-static'
+            npm ci
+            if ($LASTEXITCODE -ne 0) { throw 'npm ci failed: GitHub and the mirror are not answering. Run the workflow again in a few minutes.' }
+          }
       - name: Release notes from CHANGELOG.md
         run: node scripts/release-notes.js
       - name: Create the GitHub Release first (with the CHANGELOG notes)

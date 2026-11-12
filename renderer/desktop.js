@@ -196,9 +196,9 @@ function deskVol(x,quiet){
 }
 /* Loudness boost (Settings → Audio) + volume above 100%: both go through one Web Audio chain (see loudness.js).
    The chain is only created when it is needed, because a media element can be attached to Web Audio only once. */
-function applyLoud(){
+function applyLoud(force){
   const mode=S.loud||'off';
-  if(mode==='off'&&!(LV>1)&&!actx)return;
+  if(mode==='off'&&!(LV>1)&&!actx&&!force)return;
   if(!actx){
     actx=new AudioContext({latencyHint:'playback'});loud=NPLoud.build(actx);
     actx.createMediaElementSource(v).connect(loud.input);actx.createMediaElementSource(aud).connect(loud.input);
@@ -209,6 +209,16 @@ function applyLoud(){
   if(actx.state==='suspended')actx.resume().catch(()=>{});
 }
 window.deskVol=deskVol;window.curVol=()=>LV;
+/* Recording: the picture comes from the video element, but its sound is NOT in there when it goes another way: through the Web Audio
+   chain (volume above 100%, loudness boost) or from the ffmpeg audio stream (AC3 / DTS / several audio tracks). So the sound for the
+   recording is taken from the end of the Web Audio chain (made now when it is not there yet and the sound comes from ffmpeg). */
+window.deskRecAudio=()=>{
+  try{
+    if(!actx&&audOn())applyLoud(true);
+    if(actx&&loud){const d=actx.createMediaStreamDestination();loud.output.connect(d);return{tracks:d.stream.getAudioTracks(),done:()=>{try{loud.output.disconnect(d)}catch(_){}}}}
+  }catch(_){}
+  return null;
+};
 
 /* ---------- resume position ---------- */
 const RK='np_resume';
@@ -227,7 +237,8 @@ function fail(msg){const e=$('#empty');e.style.display='flex';e.querySelector('.
 const isWeb=p=>/^https?:\/\//i.test(p);
 let STORE=false; // Microsoft Store edition (no self-update, no yt-dlp)
 desk.appInfo().then(i=>{STORE=!!(i&&i.store)}).catch(()=>{});
-const WEB=new Map(); // link -> {title,src}  (session only; yt-dlp links expire)
+const WEB=new Map();
+const HLSL=new Map(); /* file -> local stream (H.264 + AAC) that ffmpeg makes while the file is watched */ // link -> {title,src}  (session only; yt-dlp links expire)
 const label=p=>isWeb(p)?((WEB.get(p)||{}).title||p):bn(p);
 let pendingSeek=null;
 
@@ -279,6 +290,7 @@ function histTouch(){
 const fmtOf=e=>{if(e.web&&!/\.[a-z0-9]{2,4}($|\?)/i.test(e.k||''))return 'WEB';const m=String(e.k||e.title||'').split(/[?#]/)[0].match(/\.([a-z0-9]{2,4})$/i);return m?m[1].toUpperCase():'MEDIA'};
 function noThumb(th,e){th.classList.add('npth');th.innerHTML='<img src="logo.png" alt=""><em>'+fmtOf(e)+'</em>'}
 {const st=document.createElement('style');st.textContent='.npth{display:flex;align-items:center;justify-content:center;gap:6px;background:radial-gradient(circle at 25% 15%,rgba(37,184,214,.35),transparent 55%),linear-gradient(135deg,#2a6f8f,#1b1f5e)!important}.npth img{width:34%;max-width:46px;max-height:70%;object-fit:contain;filter:drop-shadow(0 0 8px rgba(60,200,255,.45))}.npth em{font:700 10px Inter,sans-serif;font-style:normal;color:#fff;background:rgba(8,10,52,.85);border:1px solid rgba(95,215,245,.8);border-radius:6px;padding:1px 5px;align-self:flex-end;margin-bottom:22%}.th.npth img{width:46%;max-width:none}.th.npth em{font-size:8.5px;padding:0 3px;border-radius:4px;margin-bottom:14%}';document.head.appendChild(st)}
+{const st=document.createElement('style');st.textContent='#empty .cth.npth{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}#empty .cth.npth img{width:auto;height:50px;max-width:none;max-height:none}#empty .cth.npth em{align-self:center;margin:0;font-size:11px;padding:1px 8px}';document.head.appendChild(st)}
 /* history saved by older versions can hold black thumbnails: remove them once, they then get the logo placeholder */
 setTimeout(()=>{
   let left=0,changed=false;
@@ -373,6 +385,14 @@ v.addEventListener('volumechange',syncAud);
   }catch(_){}
 }
 v.addEventListener('loadedmetadata',()=>{if(audOn())mutePlayerAudio()});
+/* A recording made by an older NixPlayer (a WebM without a length) cannot be dragged on the timeline: ask for the end once, which makes the length known */
+v.addEventListener('loadedmetadata',()=>{
+  if(v.duration!==Infinity||!cur||isWeb(cur)||hlsI)return;
+  const back=v.currentTime||0;
+  const done=()=>{v.removeEventListener('timeupdate',done);try{v.currentTime=back}catch(_){}};
+  v.addEventListener('timeupdate',done);
+  try{v.currentTime=1e7}catch(_){}
+});
 v.addEventListener('timeupdate',()=>{
   if(!audOn()||v.paused||aud.paused||v.seeking||!aud.getAttribute('src'))return;
   const drift=(audStart+aud.currentTime)-v.currentTime;
@@ -446,7 +466,7 @@ async function setupAV(p,sidecar,memK,hasSub,ref){ /* ref: the address ffmpeg re
   if(cur!==p)return;
   const side=()=>{if(sidecar&&sidecar.length&&!hasSub)loadSubPath(sidecar[0],true)}; /* a subtitle file next to the video is only the fallback */
   if(!r||!r.ok){side();return}
-  const A=r.audio,ext=A.length>=2||(A.length===1&&!NATIVE_A.test(A[0].codec));
+  const A=r.audio,ext=!HLSL.has(p)&&(A.length>=2||(A.length===1&&!NATIVE_A.test(A[0].codec))); /* a playable copy already has its sound inside */
   AVs={p:ref||p,audio:A,subs:r.subs,ext,aIdx:0,sIdx:-1,web:!!ref};
   if(ext){
     let k=A.findIndex(a=>S.aLang&&sameLang(a.lang,S.aLang));if(k<0)k=A.findIndex(a=>a.def);if(k<0)k=0;
@@ -490,6 +510,8 @@ async function setupAV(p,sidecar,memK,hasSub,ref){ /* ref: the address ffmpeg re
 
 async function playPath(p){
   saveResume();cur=p;AVs=null;audTok++;stopAud();liveReset();window.prevHook=null;if(hlsI){try{hlsI.destroy()}catch(_){}hlsI=null}
+  try{const pc2=document.querySelector('#prev canvas'),x2=pc2.getContext('2d');x2.fillStyle='#000';x2.fillRect(0,0,pc2.width,pc2.height)}catch(_){}
+  for(const k of [...HLSL.keys()])if(k!==p){desk.hlsStop(k);HLSL.delete(k)} /* the stream of the file that was open stops (a finished one stays for next time) */
   v.querySelectorAll('track').forEach(t=>t.remove());curSub=null;
   try{await window.subDbReady}catch(_){}
   if(cur!==p)return;
@@ -498,7 +520,7 @@ async function playPath(p){
   const memK=window.subLast?subLast(p):null,memE=memK&&memK!=='emb'?extList.find(x=>x.k===memK):null;
   if(memE)loadSub(memE.file,{ext:1,label:memE.label,info:memE.info});
   v.defaultPlaybackRate=v.playbackRate=S.defSpeed;
-  let src;
+  let src,viaHls=false;
   if(isWeb(p)){
     let r=WEB.get(p);
     if(!r||!r.src){
@@ -508,12 +530,13 @@ async function playPath(p){
       if(!x||!x.ok){fail((x&&x.error)||'Cannot open this link');return}
       r={title:x.title||p,src:x.src,hls:!!x.hls};WEB.set(p,r);
     }
-    name=r.title;src=r.src;pv.removeAttribute('src');
-  }else{name=bn(p);src=toURL(p);pv.src=src}
-  if(isWeb(p)&&WEB.get(p).hls){
+    name=r.title;src=r.src;pv.removeAttribute('src');viaHls=!!r.hls;
+  }else if(HLSL.has(p)){name=bn(p);src=HLSL.get(p);pv.removeAttribute('src');viaHls=true}
+  else{name=bn(p);src=toURL(p);pv.src=src}
+  if(viaHls){
     if(!(await hlsLoad())||!Hls.isSupported()){fail('Cannot play this stream: the HLS player (hls.js) is missing. Run "npm install" in the NixPlayer folder.');return}
     if(cur!==p)return;
-    hlsI=new Hls({maxBufferLength:40,enableWorker:true});
+    hlsI=new Hls({maxBufferLength:40,enableWorker:true,...(HLSL.has(p)?{startPosition:0}:{})}); /* a stream that is still being made starts at its beginning, not at its live edge */
     hlsI.on(Hls.Events.ERROR,(_e,x)=>{if(!x.fatal)return;
       if(x.type===Hls.ErrorTypes.NETWORK_ERROR)hlsI.startLoad();else if(x.type===Hls.ErrorTypes.MEDIA_ERROR)hlsI.recoverMediaError();else fail('Stream error: '+x.details)});
     hlsI.loadSource(src);hlsI.attachMedia(v);
@@ -521,19 +544,25 @@ async function playPath(p){
   $('#empty').style.display='none';document.title=name+' — NixPlayer';
   v.play().catch(()=>{});
   histAdd();renderPL();
-  if(!isWeb(p)){let l=[];if(S.autoSub&&!memE)l=await desk.siblings(p);if(cur!==p)return;setupAV(p,l,memK,!!memE)}
+  if(!isWeb(p)){let l=[];if(S.autoSub&&!memE)l=await desk.siblings(p);if(cur!==p)return;setupAV(p,l,memK,!!memE);if(HLSL.has(p))ffPreview(p,p)}
   else if(!WEB.get(p).hls){
     setupAV(p,[],memK,!!memE,src);
-    /* timeline preview for online files: one frame per 5 s, cut by ffmpeg (works for HEVC too), cached */
-    const TC=new Map(),cv=document.querySelector('#prev canvas'),cx=cv.getContext('2d');let want=-1,tm=0;
-    const draw=url=>{const im=new Image();im.onload=()=>{cx.fillStyle='#000';cx.fillRect(0,0,cv.width,cv.height);const k=Math.min(cv.width/im.width,cv.height/im.height),w=im.width*k,h=im.height*k;cx.drawImage(im,(cv.width-w)/2,(cv.height-h)/2,w,h)};im.src=url};
-    window.prevHook=t=>{
-      const b=Math.round(t/5)*5;want=b;clearTimeout(tm);
-      if(TC.has(b)){draw(TC.get(b));return}
-      tm=setTimeout(async()=>{const r=await desk.thumb(src,b);if(r){TC.set(b,r);if(TC.size>300)TC.delete(TC.keys().next().value);if(want===b&&cur===p)draw(r)}},180);
-    };
+    ffPreview(p,src); /* timeline preview for online files: one frame per 5 s, cut by ffmpeg */
   } /* online file: audio tracks + embedded subtitles too (ffmpeg reads it through the proxy) */
 }
+/* Timeline preview made by ffmpeg: one frame per 5 s, cached. For online files, and for local files whose video this browser engine cannot decode
+   (HEVC, or a file that plays as a stream), where the preview video of the player cannot show frames. ref = what ffmpeg reads. */
+function ffPreview(p,ref){
+  const TC=new Map(),cv=document.querySelector('#prev canvas'),cx=cv.getContext('2d');let want=-1,tm=0;
+  const draw=url=>{const im=new Image();im.onload=()=>{cx.fillStyle='#000';cx.fillRect(0,0,cv.width,cv.height);const k=Math.min(cv.width/im.width,cv.height/im.height),w=im.width*k,h=im.height*k;cx.drawImage(im,(cv.width-w)/2,(cv.height-h)/2,w,h)};im.src=url};
+  window.prevHook=t=>{
+    const b=Math.round(t/5)*5;want=b;clearTimeout(tm);
+    if(TC.has(b)){draw(TC.get(b));return}
+    tm=setTimeout(async()=>{const r=await desk.thumb(ref,b);if(r){TC.set(b,r);if(TC.size>300)TC.delete(TC.keys().next().value);if(want===b&&cur===p)draw(r)}},180);
+  };
+}
+/* the preview video of the player could not load this local file: use ffmpeg frames instead */
+pv.addEventListener('error',()=>{if(cur&&!isWeb(cur)&&!window.prevHook)ffPreview(cur,cur)});
 async function openFiles(files){
   files=(files||[]).filter(Boolean);
   const urls=files.filter(isWeb);files=files.filter(f=>!isWeb(f));
@@ -1111,15 +1140,9 @@ const TABS={
       const body=intro+'\n\n\n---\n'+diag(i);
       return i.issuesUrl.replace(/\/+$/,'')+'/new?title='+encodeURIComponent(title)+'&body='+encodeURIComponent(body);
     };
-    const copy=async t=>{
-      try{await navigator.clipboard.writeText(t);return true}catch(_){}
-      try{const a=el('textarea',{value:t});a.style.cssText='position:fixed;opacity:0';document.body.appendChild(a);a.select();const ok=document.execCommand('copy');a.remove();return ok}catch(_){return false}
-    };
     const help=i=>{
       if(i.issuesUrl)ctl(ch,{t:'btn',l:'Report a problem',d:'Opens a new issue on GitHub with your version and Windows details filled in. Nothing is sent until you press Submit there.',text:'Report',ic:'link',
         run:()=>desk.openUrl(issue(i,'Problem: ','**What happened?**\n\n\n**What did you expect?**\n\n\n**The file type or link (if it matters):**\n'))});
-      const b=ctl(ch,{t:'btn',l:'Copy diagnostic info',d:'Copies the version, edition and system details, so you can paste them into a message.',text:'Copy',ic:'info',
-        run:async()=>{const ok=await copy(diag(i));b.lastChild.textContent=ok?'Copied':'Could not copy';setTimeout(()=>{b.lastChild.textContent='Copy'},1800)}});
       if(i.privacyUrl)ctl(ch,{t:'btn',l:'Privacy policy',d:'What stays on your computer and what is sent when you use subtitle search, translation or a dictionary.',text:'Open',ic:'url',run:()=>desk.openUrl(i.privacyUrl)});
       if(i.issuesUrl)ctl(ch,{t:'btn',l:'Send feedback',d:'Tell us what you like or what could be better.',text:'Send',ic:'link',
         run:()=>desk.openUrl(issue(i,'Feedback: ','**What do you like, or what could be better?**\n'))});
@@ -1186,6 +1209,7 @@ v.addEventListener('loadedmetadata',()=>{
 v.addEventListener('error',()=>{if(!cur)return;const c=v.error&&v.error.code;
   /* online file and the connection broke: reconnect by itself and continue from the same second (up to 3 times in a row) */
   if(isWeb(cur)&&!hlsI&&c===2&&(window.__nr=(window.__nr||0)+1)<=3){const t=v.currentTime,src=v.currentSrc||v.src;pendingSeek=t>1?t:null;hud('Connection lost. Reconnecting…','globe');setTimeout(()=>{if(!cur||!isWeb(cur))return;v.src=src;v.play().catch(()=>{})},800*window.__nr);return}
+  if(!isWeb(cur))return localFail();
   fail(isWeb(cur)?(c===4?'Cannot play this link: the server refused it, or the video/audio codec is not supported (for example HEVC / H.265 or AC3 / DTS audio).':c===2?'The connection to the server dropped. Press play again to retry.':'Cannot play this link (unsupported format, or the server refused it)'):'Cannot play this file — codec not supported')});
 /* online videos: say so while the server is slow, and warn if nothing arrives */
 {let wt=0,st0=0;
@@ -1197,6 +1221,30 @@ v.addEventListener('error',()=>{if(!cur)return;const c=v.error&&v.error.code;
   v.addEventListener('waiting',()=>{if(cur&&isWeb(cur)&&v.readyState<3)hud('Buffering…','globe')});
 }
 v.addEventListener('playing',()=>{window.__nr=0});
+/* local file: name the video format when the file cannot be played (or does not start at all) */
+async function localFail(){
+  const f=cur;let msg='Cannot play this file — codec not supported';
+  fail(msg);
+  let V=null,fmt='';
+  try{
+    const pr=await desk.probe(f);if(f!==cur)return;
+    V=(pr&&pr.ok&&pr.video)||null;
+    if(V)fmt=V.codec.toUpperCase()+(V.profile?' '+V.profile:'')+(V.w?', '+V.w+'×'+V.h:'');
+  }catch(_){}
+  if(HLSL.has(f)){HLSL.delete(f);desk.hlsStop(f);msg='The playable stream could not be played'+(fmt?' ('+fmt+')':'')+'.';fail(msg);hud(msg,'warn');return}
+  if(!V){fail(msg);hud(msg,'warn');return}
+  try{
+    /* play it now: ffmpeg makes a stream (H.264 + AAC) while you watch, it starts in a few seconds */
+    msg='This PC cannot decode this video format directly ('+fmt+'). Preparing a stream that plays…';
+    if(/^(hevc|h265)$/i.test(V.codec))msg+=' (Installing "HEVC Video Extensions" from the Microsoft Store would let it play directly on a PC with a supported graphics card.)';
+    fail(msg);hud('Preparing a playable stream…');
+    const r=await desk.hlsStart(f).catch(e=>({ok:false,error:String(e)}));
+    if(f!==cur)return;
+    if(r&&r.ok&&r.url){HLSL.set(f,r.url);playPath(f);return}
+    msg='Could not start a playable stream: '+((r&&r.error)||'unknown error');
+    fail(msg);hud(msg,'warn');
+  }catch(_){}
+}
 v.addEventListener('play',()=>desk.keepAwake(!!S.awake));
 ['pause','ended'].forEach(ev=>v.addEventListener(ev,()=>desk.keepAwake(false)));
 v.addEventListener('pause',saveResume);

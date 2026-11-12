@@ -18,9 +18,34 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
+      - name: Install dependencies (retries; uses a mirror if GitHub downloads keep failing)
+        # ffmpeg-static downloads ffmpeg.exe from GitHub Releases while installing, and that download sometimes
+        # answers 504. Try a few times, then try a mirror before giving up.
+        shell: pwsh
+        run: |
+          $ok = $false
+          foreach ($i in 1..4) {
+            npm ci
+            if ($LASTEXITCODE -eq 0) { $ok = $true; break }
+            Write-Host "npm ci failed (attempt $i of 4). Waiting before the next try..."
+            Remove-Item node_modules -Recurse -Force -ErrorAction SilentlyContinue
+            Start-Sleep -Seconds (30 * $i)
+          }
+          if (-not $ok) {
+            Write-Host 'Trying the npmmirror mirror for the ffmpeg download'
+            Remove-Item node_modules -Recurse -Force -ErrorAction SilentlyContinue
+            $env:FFMPEG_BINARIES_URL = 'https://cdn.npmmirror.com/binaries/ffmpeg-static'
+            npm ci
+            if ($LASTEXITCODE -ne 0) { throw 'npm ci failed: GitHub and the mirror are not answering. Run the workflow again in a few minutes.' }
+          }
       - name: Build the MSIX package
         run: npm run dist:store
+      - name: Add file-type icons to the package
+        # If this step cannot do its job it warns and keeps the package as built.
+        shell: pwsh
+        run: |
+          $pkg = Get-ChildItem dist -Filter *.appx | Select-Object -First 1
+          ./scripts/patch-appx.ps1 -Appx $pkg.FullName
       - name: Check the package manifest against Partner Center
         shell: pwsh
         run: |
@@ -34,6 +59,7 @@ jobs:
           if ($m -notmatch 'Name="NixNasim\.NixPlayer"') { throw 'Identity Name does not match Partner Center' }
           if ($m -notmatch 'Publisher="CN=FC6D1112-3D26-446D-B9A5-D7F2741C8E79"') { throw 'Identity Publisher does not match Partner Center' }
           if ($m -notmatch '<PublisherDisplayName>NixNasim</PublisherDisplayName>') { throw 'PublisherDisplayName does not match Partner Center' }
+          if ($m -notmatch '<uap:Logo>assets.file-') { Write-Host '::warning::File types have no icons of their own (the patch step did not run or failed).' }
           if ($m -notmatch 'windows\.fileTypeAssociation') { Write-Host '::warning::No file type associations in the manifest: double-clicking .mkv / .mp4 will not open NixPlayer. Tell the developer.' }
       - uses: actions/upload-artifact@v4
         with:
