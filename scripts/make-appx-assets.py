@@ -23,7 +23,8 @@ def wide(w,h,fill=0.8):
     c=Image.new('RGBA',(w,h),(0,0,0,0)); s=int(h*fill); i=png.resize((s,s),Image.LANCZOS); c.paste(i,((w-s)//2,(h-s)//2),i); return c
 SC=(100,125,150,200,400)
 # --- 44x44 app icon: every size the shell asks for, with and without a plate
-for n in (16,24,32,48,64,96,128,256):
+TS=(16,20,24,30,32,36,40,48,60,64,72,80,96,128,256)   # every size Windows may ask for (taskbar, Open with, Start, the small badge on thumbnails ...)
+for n in TS:
     im=square(n)
     for suffix in ('',"_altform-unplated","_altform-lightunplated"):
         im.save(os.path.join(OUT,f'Square44x44Logo.targetsize-{n}{suffix}.png'))
@@ -38,7 +39,10 @@ for name,(w,h),fill in (('Wide310x150Logo',(310,150),0.8),('SplashScreen',(620,3
 n=0
 for f in sorted(glob.glob(os.path.join(B,'file-*.ico'))):
     ext=os.path.basename(f)[5:-4]
-    for s in (16,24,32,48,64,128,256):
-        frame(f,s).save(os.path.join(OUT,f'file-{ext}.targetsize-{s}.png'))
+    for s in TS:
+        im=frame(f,s)
+        im.save(os.path.join(OUT,f'file-{ext}.targetsize-{s}.png'))
+        im.save(os.path.join(OUT,f'file-{ext}.targetsize-{s}_altform-unplated.png'))
+    for sc in SC: frame(f,max(16,round(44*sc/100))).save(os.path.join(OUT,f'file-{ext}.scale-{sc}.png'))
     frame(f,256).save(os.path.join(OUT,f'file-{ext}.png')); n+=1
 print('app icons done;',n,'file-type icons;',len(os.listdir(OUT)),'files in',OUT)

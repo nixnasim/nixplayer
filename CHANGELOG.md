@@ -5,6 +5,16 @@ Older notes (1.0 to 1.6.0) are at the bottom of this file.
 
 ## [Unreleased]
 
+## [1.8.2] - 2026-11-23
+
+### Fixed
+- **Windows media controls** (the taskbar volume / media flyout): the picture is now a frame of the video that is playing. A file without a picture (a song) shows the NixPlayer logo without the white square behind it.
+- Microsoft Store edition: the file icons come in every size Windows may ask for, so that Explorer can show the NixPlayer logo on the corner of video thumbnails as the installer edition does.
+
+### Added
+- **Chapters.** A file with chapters (MKV, MP4) gets marks on the timeline, the chapter name in the popup above the timeline, a chapter list (press **N**, or the Chapters button), and **Ctrl+→ / Ctrl+←** for the next / previous chapter. A short message shows when a new chapter starts. The button on the bar is off by default; turn it on in Settings → Buttons. All three keys can be changed in Settings → Shortcuts.
+- **Album screen for songs.** A song with a cover and tags shows the cover, title, artist, album, year, format chips (MP3 · 320 kbps · 44.1 kHz · Stereo) and the tag list, with the moving sound bars. The Windows media controls show the cover, title and artist too.
+
 ## [1.8.1] - 2026-11-12
 
 ### Fixed

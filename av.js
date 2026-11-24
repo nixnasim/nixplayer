@@ -24,29 +24,45 @@ function probe(file){
     execFile(ffPath(),['-hide_banner','-i',file],{timeout:30000,maxBuffer:8*1024*1024,windowsHide:true},(err,out,se)=>{
       if(err&&err.code==='ENOENT')return res({ok:false,error:'ffmpeg missing'});
       const txt=String(se||'');const lines=txt.split(/\r?\n/);
-      const audio=[],subs=[];let video=null,cur=null,inMeta=false;
+      const audio=[],subs=[],chapters=[],tags={};let video=null,cover=null,cur=null,chap=null,inMeta=false,metaIndent=0,sec='',mt='';
       for(const ln of lines){
+        if(/^Input #0/.test(ln)){sec='file';continue}
+        if(/^\s*Chapters:\s*$/.test(ln)){sec='chapters';cur=null;inMeta=false;continue}
+        const cm=/^\s*Chapter #\d+:\d+: start ([\d.]+), end ([\d.]+)/.exec(ln);
+        if(cm){chap={start:+cm[1],end:+cm[2],title:''};chapters.push(chap);inMeta=false;continue}
+        if(inMeta){ /* the lines of a Metadata: block are indented deeper than the word Metadata: itself */
+          const ind=/^(\s*)/.exec(ln)[1].length,kv=/^\s+([A-Za-z_]+)\s*:\s*(.*)$/.exec(ln);
+          if(ind>metaIndent){
+            if(kv){const k=kv[1].toLowerCase(),val=kv[2].trim();
+              if(mt==='file')tags[k]=val;else if(mt==='chap'&&chap&&k==='title')chap.title=val;else if(mt==='stream'&&cur&&k==='title')cur.title=val}
+            continue;
+          }
+          inMeta=false;
+        }
         const m=/^\s*Stream #0:(\d+)(?:\[0x[0-9a-f]+\])?(?:\(([^)]*)\))?: (Audio|Subtitle|Video|Data|Attachment): ([^,\n(]+?)(?:\s*\(([^)]*)\))?(?:,|$| \()(.*)$/i.exec(ln);
         if(m){
           const kind=m[3].toLowerCase(),rest=ln;
-          cur=null;inMeta=false;
+          cur=null;inMeta=false;sec='stream';
           const o={id:+m[1],lang:(m[2]&&m[2]!=='und')?m[2]:'',codec:m[4].trim().toLowerCase(),title:'',def:/\(default\)/.test(rest),forced:/\(forced\)/.test(rest)};
           if(kind==='audio'){
             const ch=/\b(mono|stereo|\d\.\d(?:\([^)]*\))?|\d+ channels)\b/i.exec(rest);o.ch=ch?ch[1].replace(/\(.*\)/,''):'';
-            const hz=/(\d+) Hz/.exec(rest);o.hz=hz?+hz[1]:0;o.idx=audio.length;audio.push(o);cur=o;
+            const hz=/(\d+) Hz/.exec(rest);o.hz=hz?+hz[1]:0;const kb=/(\d+) kb\/s/.exec(rest);o.kbps=kb?+kb[1]:0;o.idx=audio.length;audio.push(o);cur=o;
           }else if(kind==='subtitle'){o.idx=subs.length;o.text=TEXT_SUB.test(o.codec);subs.push(o);cur=o}
-          else if(kind==='video'&&!video&&!/attached pic/i.test(rest)){ // first real video stream (not cover art): codec, profile, picture size, frame rate, bit rate
+          else if(kind==='video'&&/attached pic/i.test(rest)){if(!cover)cover={id:o.id}} // the picture inside a song (album cover)
+          else if(kind==='video'&&!video){ // first real video stream (not cover art): codec, profile, picture size, frame rate, bit rate
             const sz=/(?:^|[ ,])(\d{2,5})x(\d{2,5})(?=[ ,\[]|$)/.exec(rest),fps=/([\d.]+) fps/.exec(rest),br=/(\d+) kb\/s/.exec(rest),px=/,\s*(yuv[a-z0-9]+|gbr[a-z0-9]+|nv12|p010[a-z]*|rgb[a-z0-9]*)/.exec(rest);
             video={codec:o.codec,profile:m[5]||'',w:sz?+sz[1]:0,h:sz?+sz[2]:0,fps:fps?+fps[1]:0,kbps:br?+br[1]:0,pix:px?px[1]:''}
           }
           continue;
         }
-        if(/^\s*Metadata:/.test(ln)){inMeta=!!cur;continue}
-        if(cur&&inMeta){const t=/^\s+title\s*:\s*(.*)$/i.exec(ln);if(t)cur.title=t[1].trim()}
+        if(/^\s*Metadata:/.test(ln)){inMeta=true;metaIndent=/^(\s*)/.exec(ln)[1].length;mt=sec==='file'?'file':sec==='chapters'?'chap':'stream';continue}
         if(/^\s*Stream #/.test(ln)){cur=null;inMeta=false}
       }
       const d=/Duration: (\d+):(\d+):(\d+(?:\.\d+)?)/.exec(txt);
-      res({ok:true,audio,subs,video,duration:d?(+d[1]*3600+ +d[2]*60+ +d[3]):0});
+      const T={title:tags.title||'',artist:tags.artist||tags.album_artist||'',album:tags.album||'',year:((tags.date||tags.year||'').match(/\d{4}/)||[''])[0],genre:tags.genre||'',track:tags.track||'',composer:tags.composer||''};
+      for(const k of Object.keys(T))if(!T[k])delete T[k];
+      const chs=chapters.filter(c=>c.end>c.start).map((c,i)=>({start:c.start,end:c.end,title:c.title||''}));
+      res({ok:true,audio,subs,video,cover,tags:T,chapters:chs.length>1?chs:[],duration:d?(+d[1]*3600+ +d[2]*60+ +d[3]):0});
     });
   });
   probeCache.set(file,pr);if(probeCache.size>50)probeCache.delete(probeCache.keys().next().value);
@@ -155,6 +171,23 @@ function thumb(file,t){
   });
 }
 
+/* The picture inside a song (album cover) as a JPEG data address, at most 720 px wide. */
+const coverCache=new Map();
+async function cover(file){
+  if(coverCache.has(file))return coverCache.get(file);
+  const info=await probe(file),c=info&&info.cover;
+  const pr=new Promise(res=>{
+    if(!c)return res(null);
+    execFile(ffPath(),['-nostdin','-v','error','-i',file,'-map','0:'+c.id,'-frames:v','1','-vf',"scale='min(720,iw)':-2",'-pix_fmt','yuvj420p','-f','mjpeg','-q:v','3','pipe:1'],
+      {encoding:'buffer',maxBuffer:12*1024*1024,timeout:20000,windowsHide:true},(err,out)=>{
+        if(err||!out||out.length<500)return res(null);
+        res('data:image/jpeg;base64,'+out.toString('base64'));
+      });
+  });
+  coverCache.set(file,pr);if(coverCache.size>20)coverCache.delete(coverCache.keys().next().value);
+  return pr;
+}
+
 /* ---- "play it now": H.264 + AAC made while you watch, delivered as HLS ----
    For a file this PC cannot decode (see convert). ffmpeg writes 4-second pieces and a growing playlist into the converted folder; the player
    (hls.js) starts as soon as the first pieces exist. When ffmpeg has finished the playlist is final and is kept, so the next open is instant. */
@@ -212,4 +245,4 @@ function fixWebm(file){
   });
 }
 
-module.exports={hlsStart,hlsStop,hlsStopAll,fixWebm,probe,extractSub,subLive,subStop,thumb,audioUrl,setCacheDir,ffPath,TEXT_SUB};
+module.exports={cover,hlsStart,hlsStop,hlsStopAll,fixWebm,probe,extractSub,subLive,subStop,thumb,audioUrl,setCacheDir,ffPath,TEXT_SUB};

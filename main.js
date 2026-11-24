@@ -233,6 +233,7 @@ ipcMain.handle('net:resolve',async(e,url)=>{
 /* ---------- audio tracks / embedded subtitles (ffmpeg) ---------- */
 const okMedia=p=>typeof p==='string'&&(WP.isProxy(p)||(MEDIA.test(p)&&fs.existsSync(p)));
 ipcMain.handle('av:probe',(e,p)=>okMedia(p)?AV.probe(p):{ok:false});
+ipcMain.handle('av:cover',(e,p)=>okMedia(p)?AV.cover(p):null); // the picture inside a song
 ipcMain.handle('av:sub',(e,p,i)=>okMedia(p)?AV.extractSub(p,i|0):null);
 ipcMain.handle('av:subLive',(e,p,i,ss)=>okMedia(p)?AV.subLive(p,i|0,+ss||0,m=>{if(!e.sender.isDestroyed())e.sender.send('sub:chunk',m)}):0);
 ipcMain.handle('av:subStop',(e,id)=>AV.subStop(id));

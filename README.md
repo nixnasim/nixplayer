@@ -33,7 +33,8 @@
 | 🌐 **Plays online links** | Paste a video link, or send one from your browser. |
 | 🗂️ **Playlist, bookmarks, history** | Resume any video, jump to saved moments, find what you watched. |
 | 💡 **Brightness control** | Change picture brightness with a button, a key or a swipe. |
-| 🎵 **Audio too** | Plays MP3, M4A, FLAC and more, with a moving sound-bar animation. |
+| 🎵 **Audio too** | Plays MP3, M4A, FLAC and more, with a moving sound-bar animation. A song shows its cover, title, artist and album. |
+| 📑 **Chapters** | Files with chapters get marks on the timeline, a chapter list (**N**) and next / previous chapter (**Ctrl+←/→**). The bar button is off by default: Settings → Buttons. |
 | 🔊 **Louder, clearer sound** | Volume up to 200% plus a loudness boost for quiet movies. |
 | 📸 **Screenshot and record** | One key each, saved in the folder you choose. |
 

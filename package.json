@@ -1,6 +1,6 @@
 {
   "name": "nixplayer",
-  "version": "1.8.1",
+  "version": "1.8.2",
   "description": "NixPlayer - a simple desktop video and audio player with a clean custom top bar",
   "main": "main.js",
   "author": "NixNasim",

@@ -109,6 +109,10 @@ body.full .side{border-bottom:0}
 #tlw .bmk:hover svg{transform:scale(1.25)}
 #prev{position:absolute;bottom:22px;display:none;background:var(--inp);border:1px solid var(--bd2);border-radius:3px;padding:3px;text-align:center;font-size:12px;transform:translateX(-50%);pointer-events:none}
 #prev canvas{width:160px;height:90px;display:block;background:#000}
+#pc{max-width:160px;white-space:normal;font-weight:600;margin-top:2px;line-height:1.25;display:none}
+#chm{position:absolute;inset:0;pointer-events:none}#chm i{position:absolute;top:-1px;bottom:-1px;width:2px;margin-left:-1px;background:rgba(255,255,255,.6)}
+:root[data-theme=light] #chm i{background:rgba(30,35,80,.5)}
+#chaps .th{background-size:cover;background-position:center;background-color:#000}#chaps .th.num{display:grid;place-items:center;font:700 16px system-ui,sans-serif;color:#9ea2cf;background:rgba(128,132,190,.18)}
 .btns{display:flex;flex-wrap:wrap;gap:2px;align-items:center;margin-top:2px}
 .btns button{background:none;border:0;color:var(--fg);font-size:12px;font-weight:600;padding:5px 7px;border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;min-width:30px}
 .btns button:hover{background:var(--bg3);color:var(--fgh)}
@@ -279,6 +283,7 @@ if(!S.m12){S.hide=S.hide||{};S.hide.size=true;S.m12=1;save()}
 if(!S.m14){S.hide=S.hide||{};S.hide.size=true;S.m14=1;save()} /* window / fit size button: hidden by default, enable it in Settings → Buttons */
 if(!S.m15){S.maxVol=1;S.m15=1;save()} /* maximum volume: 100% by default */
 if(!S.m13){S.hide=S.hide||{};Object.assign(S.hide,{pip:true,open:true,url:true});S.m13=1;save()}
+if(!S.m20){S.hide=S.hide||{};S.hide.chap=true;S.m20=1;save()} /* the chapters button: hidden by default, enable it in Settings → Buttons (the N key works anyway) */
 let bright=1,fit=0,name='',url='',subOn=true,hudT;
 const fmt=t=>{t=Math.max(0,t|0);const h=t/3600|0,m=(t%3600)/60|0,s=t%60;return(h?h+':'+String(m).padStart(2,'0'):m)+':'+String(s).padStart(2,'0')};
 function hud(t,ic,pct){const h=$('#hud');h.innerHTML=(ic?ico(ic):'')+'<span></span>'+(pct!=null?'<i class="hb"><b></b></i>':'');h.querySelector('span').textContent=t;if(pct!=null)h.querySelector('b').style.width=Math.max(0,Math.min(100,pct))+'%';h.classList.add('show');clearTimeout(hudT);hudT=setTimeout(()=>h.classList.remove('show'),1000)}
@@ -523,6 +528,7 @@ const B=[
 ['size','size','Window / fit size',()=>pop('size',p=>{head(p,'Fit');if(window.deskAspectRows)deskAspectRows(p,row);else ['contain','cover','fill'].forEach((m,i)=>row(p,['Fit','Fill (crop)','Stretch'][i],()=>{v.style.objectFit=m},v.style.objectFit==m));row(p,'Fullscreen (F)',fs);if(window.deskSizeRows)deskSizeRows(p,row);else{row(p,'Resize window 960×540',()=>{try{window.resizeTo(960,540)}catch(e){}});row(p,'New small window',()=>window.open(location.href,'_blank','popup,width=640,height=380'))}})],
 ['list','list','Playlist (L)',()=>window.togglePL&&togglePL()],
 ['hist','hist','Watch history (H)',()=>window.toggleHist&&toggleHist()],
+['chap','chap','Chapters (N)',()=>window.toggleChaps&&toggleChaps()],
 ];
 const bw=$('#btns'),bt={};
 B.forEach(([id,ic,tt,fn])=>{const b=document.createElement('button');if(id=='spd')b.textContent='1x';else b.innerHTML=ico(ic,id=='play'?'f':'');b.title=tt;b.onclick=e=>{e.stopPropagation();fn()};bt[id]=b;bw.appendChild(b);if(id=='rec'||id=='next'){const s=document.createElement('span');s.className='sep';bw.appendChild(s)}if(id=='aud'){const s=document.createElement('span');s.className='sp';bw.appendChild(s)}});
@@ -540,7 +546,7 @@ const TH={system:'System',dark:'Dark',light:'Light',glass:'Glass'};
 function buildMenu(){
  dmn.innerHTML='';
  const TI={system:'monitor',dark:'moon',light:'sun',glass:'palette'},th=S.theme||'system';
- [['open','Open file…','Ctrl+O',()=>bt.open.click()],['url','Open link…','Ctrl+U',()=>bt.url.click()],['list','Playlist','L',()=>bt.list.click()],['hist','Watch history','H',()=>bt.hist.click()],
+ [['open','Open file…','Ctrl+O',()=>bt.open.click()],['url','Open link…','Ctrl+U',()=>bt.url.click()],['list','Playlist','L',()=>bt.list.click()],['hist','Watch history','H',()=>bt.hist.click()],['chap','Chapters','N',()=>window.toggleChaps&&toggleChaps()],
   [TI[th],'Theme: '+TH[th],'click to change',()=>{const o=['system','dark','light','glass'];S.theme=o[(o.indexOf(S.theme||'system')+1)%4];save();applyTheme();hud('Theme: '+TH[S.theme],TI[S.theme])}],
   ['settings','Settings','Ctrl+,',()=>openSet()],['logout','Exit','',()=>tb.close.click()]].forEach(([ic,t,k,fn])=>{const d=document.createElement('div');d.className='m';d.innerHTML='<span>'+ico(ic)+'<b></b></span><small></small>';d.querySelector('b').textContent=t;d.querySelector('small').textContent=k;d.onclick=()=>{dmn.style.display='none';fn()};dmn.appendChild(d)});
 }
@@ -583,7 +589,7 @@ st.addEventListener('dblclick',e=>{if(e.target.closest('#bar,#pop,#dlg,.side'))r
 const pv=document.createElement('video');pv.muted=true;pv.preload='auto';const pc=$('#prev canvas').getContext('2d');let pt=0;
 pv.addEventListener('seeked',()=>pc.drawImage(pv,0,0,160,90));
 const tw=$('#tlw'),at=e=>{const r=tw.getBoundingClientRect();return Math.min(1,Math.max(0,(e.clientX-r.left)/r.width))};
-tw.addEventListener('pointermove',e=>{const f=at(e),t=f*(v.duration||0);const p=$('#prev');p.style.display='block';p.style.left=Math.min(tw.clientWidth-90,Math.max(90,f*tw.clientWidth))+'px';$('#pt').textContent=fmt(t);if(window.prevHook)window.prevHook(t);else if(Date.now()-pt>80&&pv.readyState){pt=Date.now();pv.currentTime=t}if(e.buttons&1)v.currentTime=t});
+tw.addEventListener('pointermove',e=>{const f=at(e),t=f*(v.duration||0);const p=$('#prev');p.style.display='block';p.style.left=Math.min(tw.clientWidth-90,Math.max(90,f*tw.clientWidth))+'px';$('#pt').textContent=fmt(t);if(window.chapHover)chapHover(t);if(window.prevHook)window.prevHook(t);else if(Date.now()-pt>80&&pv.readyState){pt=Date.now();pv.currentTime=t}if(e.buttons&1)v.currentTime=t});
 tw.addEventListener('pointerleave',()=>$('#prev').style.display='none');
 tw.addEventListener('pointerdown',e=>{tw.setPointerCapture(e.pointerId);v.currentTime=at(e)*(v.duration||0)});
 try{new ResizeObserver(()=>root.style.setProperty('--barh',$('#bar').offsetHeight+'px')).observe($('#bar'))}catch(e){}
@@ -627,4 +633,4 @@ window.syncAH=()=>{document.body.classList.toggle('ah',!!S.autoHide);if(!S.autoH
 const wake=()=>{setIdle(false);clearTimeout(it);it=setTimeout(()=>{if(!v.paused&&P.style.display!='block'&&(S.autoHide||document.fullscreenElement))setIdle(true)},S.hideMs||2500)};
 st.addEventListener('pointermove',wake);document.addEventListener('mousemove',wake);wake();syncAH();upd();
 </script>
-<script src="loudness.js"></script><script src="desktop.js"></script><script src="tr.js"></script></body></html>
+<script src="nixlogo.js"></script><script src="loudness.js"></script><script src="desktop.js"></script><script src="tr.js"></script></body></html>

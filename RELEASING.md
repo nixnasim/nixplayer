@@ -84,7 +84,10 @@ The identity values in `package.json` -> `build.appx` come from Partner Center -
 They must match character for character; the workflow stops with an error if they do not.
 
 ### Testing
-- The `.appx` is NOT signed (the Store signs it after certification), so Windows will not install it directly.
+- Try the real Store package on your own PC without uploading anything: turn on Developer Mode (Settings -> System -> For developers), run
+  `npm install` once, then double-click `scripts\test-store-local.cmd`. It builds the package, adds the file-type icons and installs it as a test
+  copy (it replaces an installed Store copy). Remove it again with `Get-AppxPackage NixNasim.NixPlayer | Remove-AppxPackage`.
+- The `.appx` itself is NOT signed (the Store signs it after certification), so double-clicking it does not install it.
 - Try the Store behaviour from source: `set NIXPLAYER_STORE=1` then `npm start`
   (no update button, no yt-dlp, no external download links).
 - Test the real installer edition with `npm run dist` (or the GitHub release).

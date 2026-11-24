@@ -4,10 +4,14 @@
 param([Parameter(Mandatory=$true)][string]$Appx, [string]$Package = 'package.json')
 $ErrorActionPreference = 'Stop'
 try {
+  # makeappx.exe: from the Windows SDK, or from the copy electron-builder downloaded when it built the package
+  $found = @()
   $kits = Join-Path ${env:ProgramFiles(x86)} 'Windows Kits\10\bin'
-  $makeappx = Get-ChildItem $kits -Recurse -Filter makeappx.exe -ErrorAction SilentlyContinue |
-    Where-Object { $_.FullName -match '\\x64\\' } | Sort-Object FullName -Descending | Select-Object -First 1 -ExpandProperty FullName
-  if (-not $makeappx) { throw 'makeappx.exe (Windows SDK) was not found on this machine' }
+  if (Test-Path $kits) { $found += Get-ChildItem $kits -Recurse -Filter makeappx.exe -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match '\\x64\\' } | Sort-Object FullName -Descending }
+  $eb = Join-Path $env:LOCALAPPDATA 'electron-builder\Cache'
+  if (Test-Path $eb) { $found += Get-ChildItem $eb -Recurse -Filter makeappx.exe -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match 'x64' } }
+  $makeappx = $found | Select-Object -First 1 -ExpandProperty FullName
+  if (-not $makeappx) { throw 'makeappx.exe was not found (neither in the Windows SDK nor in the electron-builder cache)' }
   Write-Host "Using $makeappx"
   $tmp = if ($env:RUNNER_TEMP) { $env:RUNNER_TEMP } else { $env:TEMP }
   $work = Join-Path $tmp 'nix-appx-work'
